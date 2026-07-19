@@ -1,0 +1,1346 @@
+<?xml version="1.0" encoding="utf-8"?>
+<main xmlns:tns="FIFADataTransferFormatEPTSNamespace/FIFADataTransferFormatEPTS" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="FIFADataTransferFormatEPTSNamespace/FIFADataTransferFormatEPTS FIFADataTransferFormatEPTS.xsd">
+  <Metadata>
+    <GlobalConfig>
+      <FileDate>2026-03-05T14:37:34.731Z</FileDate>
+      <FileName>DEMO_1001_FULLMATCH_FifaData</FileName>
+      <TrackingType>Optical</TrackingType>
+      <ProviderName>Metrica Sports</ProviderName>
+      <FrameRate>25.0</FrameRate>
+      <ProviderGlobalParameters>
+        <ProviderParameter>
+          <Name>first_half_start</Name>
+          <Value>0</Value>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>first_half_end</Name>
+          <Value>145967</Value>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>second_half_start</Name>
+          <Value/>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>second_half_end</Name>
+          <Value/>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>first_extra_half_start</Name>
+          <Value/>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>first_extra_half_end</Name>
+          <Value/>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>second_extra_half_start</Name>
+          <Value/>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>second_extra_half_end</Name>
+          <Value/>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>data_type</Name>
+          <Value>atd</Value>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>tracking_source</Name>
+          <Value>Metrica Sports</Value>
+        </ProviderParameter>
+        <ProviderParameter>
+          <Name>version</Name>
+          <Value>1</Value>
+        </ProviderParameter>
+      </ProviderGlobalParameters>
+    </GlobalConfig>
+    <Sessions>
+      <Session id="session1">
+        <SessionType>Match</SessionType>
+        <Start>2026-03-05T14:37:34.731Z</Start>
+        <MatchParameters>
+          <Score idLocalTeam="MET_user_team_eROa4flbUkOH" idVisitingTeam="MET_user_team_Ay3A3xUU9S7wE">
+            <LocalTeamScore/>
+            <VisitingTeamScore/>
+          </Score>
+        </MatchParameters>
+        <FieldSize>
+          <Width>105</Width>
+          <Height>68</Height>
+        </FieldSize>
+        <Competition id=""/>
+        <ProviderSessionParameters>
+          <ProviderParameter>
+            <Name>matchday</Name>
+            <Value/>
+          </ProviderParameter>
+        </ProviderSessionParameters>
+      </Session>
+    </Sessions>
+    <Teams>
+      <Team id="MET_user_team_eROa4flbUkOH">
+        <Name>Red Team</Name>
+        <ProviderTeamsParameters>
+          <ProviderParameter>
+            <Name>attack_direction_first_half</Name>
+            <Value>left_to_right</Value>
+          </ProviderParameter>
+        </ProviderTeamsParameters>
+      </Team>
+      <Team id="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>White Team</Name>
+        <ProviderTeamsParameters>
+          <ProviderParameter>
+            <Name>attack_direction_first_half</Name>
+            <Value>right_to_left</Value>
+          </ProviderParameter>
+        </ProviderTeamsParameters>
+      </Team>
+    </Teams>
+    <Players>
+      <Player id="1" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 1</Name>
+        <ShirtNumber>1</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="2" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 2</Name>
+        <ShirtNumber>2</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="3" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 3</Name>
+        <ShirtNumber>3</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="4" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 4</Name>
+        <ShirtNumber>4</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="5" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 5</Name>
+        <ShirtNumber>5</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="6" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 6</Name>
+        <ShirtNumber>6</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="7" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 7</Name>
+        <ShirtNumber>7</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="8" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 8</Name>
+        <ShirtNumber>8</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="9" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 9</Name>
+        <ShirtNumber>9</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="10" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 10</Name>
+        <ShirtNumber>10</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="11" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 11</Name>
+        <ShirtNumber>11</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="12" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 12</Name>
+        <ShirtNumber>12</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="13" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 13</Name>
+        <ShirtNumber>13</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="14" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 14</Name>
+        <ShirtNumber>14</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="15" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 15</Name>
+        <ShirtNumber>15</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="16" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 16</Name>
+        <ShirtNumber>16</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="17" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 17</Name>
+        <ShirtNumber>17</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="18" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 18</Name>
+        <ShirtNumber>18</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="19" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 19</Name>
+        <ShirtNumber>19</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="20" teamId="MET_user_team_eROa4flbUkOH">
+        <Name>Track 20</Name>
+        <ShirtNumber>20</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Goalkeeper</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.5</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="21" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 21</Name>
+        <ShirtNumber>21</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="22" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 22</Name>
+        <ShirtNumber>22</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="23" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 23</Name>
+        <ShirtNumber>23</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="24" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 24</Name>
+        <ShirtNumber>24</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="25" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 25</Name>
+        <ShirtNumber>25</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="26" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 26</Name>
+        <ShirtNumber>26</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="27" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 27</Name>
+        <ShirtNumber>27</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="28" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 28</Name>
+        <ShirtNumber>28</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="29" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 29</Name>
+        <ShirtNumber>29</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="30" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 30</Name>
+        <ShirtNumber>30</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="31" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 31</Name>
+        <ShirtNumber>31</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="32" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 32</Name>
+        <ShirtNumber>32</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="33" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 33</Name>
+        <ShirtNumber>33</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="34" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 34</Name>
+        <ShirtNumber>34</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="35" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 35</Name>
+        <ShirtNumber>35</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="36" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 36</Name>
+        <ShirtNumber>36</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="37" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 37</Name>
+        <ShirtNumber>37</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="38" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 38</Name>
+        <ShirtNumber>38</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="39" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 39</Name>
+        <ShirtNumber>39</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Unknown</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>-1</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+      <Player id="40" teamId="MET_user_team_Ay3A3xUU9S7wE">
+        <Name>Track 40</Name>
+        <ShirtNumber>40</ShirtNumber>
+        <ProviderPlayerParameters>
+          <ProviderParameter>
+            <Name>position_type</Name>
+            <Value>Goalkeeper</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_index</Name>
+            <Value>0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_x</Name>
+            <Value>0.0</Value>
+          </ProviderParameter>
+          <ProviderParameter>
+            <Name>position_y</Name>
+            <Value>0.5</Value>
+          </ProviderParameter>
+        </ProviderPlayerParameters>
+      </Player>
+    </Players>
+    <Devices>
+      <Device id="device1">
+        <Name>Device 1</Name>
+        <Sensors>
+          <Sensor id="position">
+            <Name>Position</Name>
+            <Channels>
+              <Channel id="x">
+                <Name>position_x</Name>
+                <Unit>normalized</Unit>
+              </Channel>
+              <Channel id="y">
+                <Name>position_y</Name>
+                <Unit>normalized</Unit>
+              </Channel>
+            </Channels>
+          </Sensor>
+          <Sensor id="speed">
+            <Name>Speed in kilometers per hour</Name>
+            <Channels>
+              <Channel id="s">
+                <Name>speed_kph</Name>
+                <Unit>kph</Unit>
+              </Channel>
+            </Channels>
+          </Sensor>
+        </Sensors>
+      </Device>
+    </Devices>
+    <PlayerChannels>
+      <PlayerChannel channelId="x" id="player1_x" playerId="1"/>
+      <PlayerChannel channelId="y" id="player1_y" playerId="1"/>
+      <PlayerChannel channelId="s" id="player1_speed" playerId="1"/>
+      <PlayerChannel channelId="x" id="player2_x" playerId="2"/>
+      <PlayerChannel channelId="y" id="player2_y" playerId="2"/>
+      <PlayerChannel channelId="s" id="player2_speed" playerId="2"/>
+      <PlayerChannel channelId="x" id="player3_x" playerId="3"/>
+      <PlayerChannel channelId="y" id="player3_y" playerId="3"/>
+      <PlayerChannel channelId="s" id="player3_speed" playerId="3"/>
+      <PlayerChannel channelId="x" id="player4_x" playerId="4"/>
+      <PlayerChannel channelId="y" id="player4_y" playerId="4"/>
+      <PlayerChannel channelId="s" id="player4_speed" playerId="4"/>
+      <PlayerChannel channelId="x" id="player5_x" playerId="5"/>
+      <PlayerChannel channelId="y" id="player5_y" playerId="5"/>
+      <PlayerChannel channelId="s" id="player5_speed" playerId="5"/>
+      <PlayerChannel channelId="x" id="player6_x" playerId="6"/>
+      <PlayerChannel channelId="y" id="player6_y" playerId="6"/>
+      <PlayerChannel channelId="s" id="player6_speed" playerId="6"/>
+      <PlayerChannel channelId="x" id="player7_x" playerId="7"/>
+      <PlayerChannel channelId="y" id="player7_y" playerId="7"/>
+      <PlayerChannel channelId="s" id="player7_speed" playerId="7"/>
+      <PlayerChannel channelId="x" id="player8_x" playerId="8"/>
+      <PlayerChannel channelId="y" id="player8_y" playerId="8"/>
+      <PlayerChannel channelId="s" id="player8_speed" playerId="8"/>
+      <PlayerChannel channelId="x" id="player9_x" playerId="9"/>
+      <PlayerChannel channelId="y" id="player9_y" playerId="9"/>
+      <PlayerChannel channelId="s" id="player9_speed" playerId="9"/>
+      <PlayerChannel channelId="x" id="player10_x" playerId="10"/>
+      <PlayerChannel channelId="y" id="player10_y" playerId="10"/>
+      <PlayerChannel channelId="s" id="player10_speed" playerId="10"/>
+      <PlayerChannel channelId="x" id="player11_x" playerId="11"/>
+      <PlayerChannel channelId="y" id="player11_y" playerId="11"/>
+      <PlayerChannel channelId="s" id="player11_speed" playerId="11"/>
+      <PlayerChannel channelId="x" id="player12_x" playerId="12"/>
+      <PlayerChannel channelId="y" id="player12_y" playerId="12"/>
+      <PlayerChannel channelId="s" id="player12_speed" playerId="12"/>
+      <PlayerChannel channelId="x" id="player13_x" playerId="13"/>
+      <PlayerChannel channelId="y" id="player13_y" playerId="13"/>
+      <PlayerChannel channelId="s" id="player13_speed" playerId="13"/>
+      <PlayerChannel channelId="x" id="player14_x" playerId="14"/>
+      <PlayerChannel channelId="y" id="player14_y" playerId="14"/>
+      <PlayerChannel channelId="s" id="player14_speed" playerId="14"/>
+      <PlayerChannel channelId="x" id="player15_x" playerId="15"/>
+      <PlayerChannel channelId="y" id="player15_y" playerId="15"/>
+      <PlayerChannel channelId="s" id="player15_speed" playerId="15"/>
+      <PlayerChannel channelId="x" id="player16_x" playerId="16"/>
+      <PlayerChannel channelId="y" id="player16_y" playerId="16"/>
+      <PlayerChannel channelId="s" id="player16_speed" playerId="16"/>
+      <PlayerChannel channelId="x" id="player17_x" playerId="17"/>
+      <PlayerChannel channelId="y" id="player17_y" playerId="17"/>
+      <PlayerChannel channelId="s" id="player17_speed" playerId="17"/>
+      <PlayerChannel channelId="x" id="player18_x" playerId="18"/>
+      <PlayerChannel channelId="y" id="player18_y" playerId="18"/>
+      <PlayerChannel channelId="s" id="player18_speed" playerId="18"/>
+      <PlayerChannel channelId="x" id="player19_x" playerId="19"/>
+      <PlayerChannel channelId="y" id="player19_y" playerId="19"/>
+      <PlayerChannel channelId="s" id="player19_speed" playerId="19"/>
+      <PlayerChannel channelId="x" id="player20_x" playerId="20"/>
+      <PlayerChannel channelId="y" id="player20_y" playerId="20"/>
+      <PlayerChannel channelId="s" id="player20_speed" playerId="20"/>
+      <PlayerChannel channelId="x" id="player21_x" playerId="21"/>
+      <PlayerChannel channelId="y" id="player21_y" playerId="21"/>
+      <PlayerChannel channelId="s" id="player21_speed" playerId="21"/>
+      <PlayerChannel channelId="x" id="player22_x" playerId="22"/>
+      <PlayerChannel channelId="y" id="player22_y" playerId="22"/>
+      <PlayerChannel channelId="s" id="player22_speed" playerId="22"/>
+      <PlayerChannel channelId="x" id="player23_x" playerId="23"/>
+      <PlayerChannel channelId="y" id="player23_y" playerId="23"/>
+      <PlayerChannel channelId="s" id="player23_speed" playerId="23"/>
+      <PlayerChannel channelId="x" id="player24_x" playerId="24"/>
+      <PlayerChannel channelId="y" id="player24_y" playerId="24"/>
+      <PlayerChannel channelId="s" id="player24_speed" playerId="24"/>
+      <PlayerChannel channelId="x" id="player25_x" playerId="25"/>
+      <PlayerChannel channelId="y" id="player25_y" playerId="25"/>
+      <PlayerChannel channelId="s" id="player25_speed" playerId="25"/>
+      <PlayerChannel channelId="x" id="player26_x" playerId="26"/>
+      <PlayerChannel channelId="y" id="player26_y" playerId="26"/>
+      <PlayerChannel channelId="s" id="player26_speed" playerId="26"/>
+      <PlayerChannel channelId="x" id="player27_x" playerId="27"/>
+      <PlayerChannel channelId="y" id="player27_y" playerId="27"/>
+      <PlayerChannel channelId="s" id="player27_speed" playerId="27"/>
+      <PlayerChannel channelId="x" id="player28_x" playerId="28"/>
+      <PlayerChannel channelId="y" id="player28_y" playerId="28"/>
+      <PlayerChannel channelId="s" id="player28_speed" playerId="28"/>
+      <PlayerChannel channelId="x" id="player29_x" playerId="29"/>
+      <PlayerChannel channelId="y" id="player29_y" playerId="29"/>
+      <PlayerChannel channelId="s" id="player29_speed" playerId="29"/>
+      <PlayerChannel channelId="x" id="player30_x" playerId="30"/>
+      <PlayerChannel channelId="y" id="player30_y" playerId="30"/>
+      <PlayerChannel channelId="s" id="player30_speed" playerId="30"/>
+      <PlayerChannel channelId="x" id="player31_x" playerId="31"/>
+      <PlayerChannel channelId="y" id="player31_y" playerId="31"/>
+      <PlayerChannel channelId="s" id="player31_speed" playerId="31"/>
+      <PlayerChannel channelId="x" id="player32_x" playerId="32"/>
+      <PlayerChannel channelId="y" id="player32_y" playerId="32"/>
+      <PlayerChannel channelId="s" id="player32_speed" playerId="32"/>
+      <PlayerChannel channelId="x" id="player33_x" playerId="33"/>
+      <PlayerChannel channelId="y" id="player33_y" playerId="33"/>
+      <PlayerChannel channelId="s" id="player33_speed" playerId="33"/>
+      <PlayerChannel channelId="x" id="player34_x" playerId="34"/>
+      <PlayerChannel channelId="y" id="player34_y" playerId="34"/>
+      <PlayerChannel channelId="s" id="player34_speed" playerId="34"/>
+      <PlayerChannel channelId="x" id="player35_x" playerId="35"/>
+      <PlayerChannel channelId="y" id="player35_y" playerId="35"/>
+      <PlayerChannel channelId="s" id="player35_speed" playerId="35"/>
+      <PlayerChannel channelId="x" id="player36_x" playerId="36"/>
+      <PlayerChannel channelId="y" id="player36_y" playerId="36"/>
+      <PlayerChannel channelId="s" id="player36_speed" playerId="36"/>
+      <PlayerChannel channelId="x" id="player37_x" playerId="37"/>
+      <PlayerChannel channelId="y" id="player37_y" playerId="37"/>
+      <PlayerChannel channelId="s" id="player37_speed" playerId="37"/>
+      <PlayerChannel channelId="x" id="player38_x" playerId="38"/>
+      <PlayerChannel channelId="y" id="player38_y" playerId="38"/>
+      <PlayerChannel channelId="s" id="player38_speed" playerId="38"/>
+      <PlayerChannel channelId="x" id="player39_x" playerId="39"/>
+      <PlayerChannel channelId="y" id="player39_y" playerId="39"/>
+      <PlayerChannel channelId="s" id="player39_speed" playerId="39"/>
+      <PlayerChannel channelId="x" id="player40_x" playerId="40"/>
+      <PlayerChannel channelId="y" id="player40_y" playerId="40"/>
+      <PlayerChannel channelId="s" id="player40_speed" playerId="40"/>
+    </PlayerChannels>
+  </Metadata>
+  <DataFormatSpecifications>
+    <DataFormatSpecification endFrame="145967" separator=":" startFrame="1">
+      <StringRegister name="frameCount"/>
+      <SplitRegister separator=";">
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player1_x"/>
+          <PlayerChannelRef playerChannelId="player1_y"/>
+          <PlayerChannelRef playerChannelId="player1_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player2_x"/>
+          <PlayerChannelRef playerChannelId="player2_y"/>
+          <PlayerChannelRef playerChannelId="player2_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player3_x"/>
+          <PlayerChannelRef playerChannelId="player3_y"/>
+          <PlayerChannelRef playerChannelId="player3_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player4_x"/>
+          <PlayerChannelRef playerChannelId="player4_y"/>
+          <PlayerChannelRef playerChannelId="player4_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player5_x"/>
+          <PlayerChannelRef playerChannelId="player5_y"/>
+          <PlayerChannelRef playerChannelId="player5_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player6_x"/>
+          <PlayerChannelRef playerChannelId="player6_y"/>
+          <PlayerChannelRef playerChannelId="player6_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player7_x"/>
+          <PlayerChannelRef playerChannelId="player7_y"/>
+          <PlayerChannelRef playerChannelId="player7_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player8_x"/>
+          <PlayerChannelRef playerChannelId="player8_y"/>
+          <PlayerChannelRef playerChannelId="player8_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player9_x"/>
+          <PlayerChannelRef playerChannelId="player9_y"/>
+          <PlayerChannelRef playerChannelId="player9_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player10_x"/>
+          <PlayerChannelRef playerChannelId="player10_y"/>
+          <PlayerChannelRef playerChannelId="player10_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player11_x"/>
+          <PlayerChannelRef playerChannelId="player11_y"/>
+          <PlayerChannelRef playerChannelId="player11_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player12_x"/>
+          <PlayerChannelRef playerChannelId="player12_y"/>
+          <PlayerChannelRef playerChannelId="player12_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player13_x"/>
+          <PlayerChannelRef playerChannelId="player13_y"/>
+          <PlayerChannelRef playerChannelId="player13_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player14_x"/>
+          <PlayerChannelRef playerChannelId="player14_y"/>
+          <PlayerChannelRef playerChannelId="player14_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player15_x"/>
+          <PlayerChannelRef playerChannelId="player15_y"/>
+          <PlayerChannelRef playerChannelId="player15_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player16_x"/>
+          <PlayerChannelRef playerChannelId="player16_y"/>
+          <PlayerChannelRef playerChannelId="player16_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player17_x"/>
+          <PlayerChannelRef playerChannelId="player17_y"/>
+          <PlayerChannelRef playerChannelId="player17_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player18_x"/>
+          <PlayerChannelRef playerChannelId="player18_y"/>
+          <PlayerChannelRef playerChannelId="player18_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player19_x"/>
+          <PlayerChannelRef playerChannelId="player19_y"/>
+          <PlayerChannelRef playerChannelId="player19_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player20_x"/>
+          <PlayerChannelRef playerChannelId="player20_y"/>
+          <PlayerChannelRef playerChannelId="player20_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player21_x"/>
+          <PlayerChannelRef playerChannelId="player21_y"/>
+          <PlayerChannelRef playerChannelId="player21_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player22_x"/>
+          <PlayerChannelRef playerChannelId="player22_y"/>
+          <PlayerChannelRef playerChannelId="player22_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player23_x"/>
+          <PlayerChannelRef playerChannelId="player23_y"/>
+          <PlayerChannelRef playerChannelId="player23_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player24_x"/>
+          <PlayerChannelRef playerChannelId="player24_y"/>
+          <PlayerChannelRef playerChannelId="player24_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player25_x"/>
+          <PlayerChannelRef playerChannelId="player25_y"/>
+          <PlayerChannelRef playerChannelId="player25_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player26_x"/>
+          <PlayerChannelRef playerChannelId="player26_y"/>
+          <PlayerChannelRef playerChannelId="player26_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player27_x"/>
+          <PlayerChannelRef playerChannelId="player27_y"/>
+          <PlayerChannelRef playerChannelId="player27_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player28_x"/>
+          <PlayerChannelRef playerChannelId="player28_y"/>
+          <PlayerChannelRef playerChannelId="player28_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player29_x"/>
+          <PlayerChannelRef playerChannelId="player29_y"/>
+          <PlayerChannelRef playerChannelId="player29_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player30_x"/>
+          <PlayerChannelRef playerChannelId="player30_y"/>
+          <PlayerChannelRef playerChannelId="player30_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player31_x"/>
+          <PlayerChannelRef playerChannelId="player31_y"/>
+          <PlayerChannelRef playerChannelId="player31_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player32_x"/>
+          <PlayerChannelRef playerChannelId="player32_y"/>
+          <PlayerChannelRef playerChannelId="player32_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player33_x"/>
+          <PlayerChannelRef playerChannelId="player33_y"/>
+          <PlayerChannelRef playerChannelId="player33_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player34_x"/>
+          <PlayerChannelRef playerChannelId="player34_y"/>
+          <PlayerChannelRef playerChannelId="player34_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player35_x"/>
+          <PlayerChannelRef playerChannelId="player35_y"/>
+          <PlayerChannelRef playerChannelId="player35_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player36_x"/>
+          <PlayerChannelRef playerChannelId="player36_y"/>
+          <PlayerChannelRef playerChannelId="player36_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player37_x"/>
+          <PlayerChannelRef playerChannelId="player37_y"/>
+          <PlayerChannelRef playerChannelId="player37_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player38_x"/>
+          <PlayerChannelRef playerChannelId="player38_y"/>
+          <PlayerChannelRef playerChannelId="player38_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player39_x"/>
+          <PlayerChannelRef playerChannelId="player39_y"/>
+          <PlayerChannelRef playerChannelId="player39_speed"/>
+        </SplitRegister>
+        <SplitRegister separator=",">
+          <PlayerChannelRef playerChannelId="player40_x"/>
+          <PlayerChannelRef playerChannelId="player40_y"/>
+          <PlayerChannelRef playerChannelId="player40_speed"/>
+        </SplitRegister>
+      </SplitRegister>
+      <SplitRegister separator=",">
+        <BallChannelRef channelId="x"/>
+        <BallChannelRef channelId="y"/>
+        <BallChannelRef channelId="s"/>
+      </SplitRegister>
+    </DataFormatSpecification>
+  </DataFormatSpecifications>
+</main>
