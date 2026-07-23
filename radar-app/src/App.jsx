@@ -3,11 +3,12 @@ import {
   Play, 
   Pause, 
   RotateCcw, 
-  Activity, 
-  TrendingUp, 
-  Eye, 
-  Info,
-  ChevronRight
+  ArrowLeftRight,
+  Columns,
+  LayoutGrid,
+  Tv,
+  Radio,
+  Maximize2
 } from 'lucide-react';
 import './App.css';
 
@@ -22,6 +23,10 @@ function App() {
   const [currentFrameIdx, setCurrentFrameIdx] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   
+  // View mode and layout settings
+  const [primaryView, setPrimaryView] = useState('radar'); // 'radar' | 'video'
+  const [layoutMode, setLayoutMode] = useState('asymmetric'); // 'asymmetric' | 'equal'
+
   // Sidebar Filters
   const [selectedTeam, setSelectedTeam] = useState('Red Team');
   const [selectedCategory, setSelectedCategory] = useState('ATTACKING TRANSITION');
@@ -31,6 +36,9 @@ function App() {
   const [showCentroid, setShowCentroid] = useState(false);
   const [showPitchControl, setShowPitchControl] = useState(false);
   const [showPassMap, setShowPassMap] = useState(true);
+  const [showDefensiveLine, setShowDefensiveLine] = useState(false);
+  const [showMidfieldLine, setShowMidfieldLine] = useState(false);
+  const [showAttackingLine, setShowAttackingLine] = useState(false);
   
   // Interactive tooltips / selections
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -406,6 +414,130 @@ function App() {
       }
     }
 
+    // 7.5 Draw Tactical Lines (Defensive, Midfield, Attacking) & Player Distances
+    const redTeamPlayers = currentFrame.players.filter(p => p.team === 'Red Team');
+    
+    if (redTeamPlayers.length >= 3 && (showDefensiveLine || showMidfieldLine || showAttackingLine)) {
+      // Sort Red Team players by X coordinate (from defense to attack)
+      const sortedByX = [...redTeamPlayers].sort((a, b) => a.x - b.x);
+
+      // Exclude Goalkeeper (player furthest back if team has 10+ players)
+      let outfield = sortedByX;
+      if (sortedByX.length >= 10) {
+        outfield = sortedByX.slice(1);
+      }
+
+      const totalOutfield = outfield.length;
+
+      // Calculate line sizes dynamically (e.g. 4 defenders, 3-4 midfielders, 3 attackers)
+      const numDef = Math.max(1, Math.round(totalOutfield * 0.38));
+      const numAtt = Math.max(1, Math.round(totalOutfield * 0.30));
+      const numMid = Math.max(1, totalOutfield - numDef - numAtt);
+
+      const defenders = outfield.slice(0, numDef);
+      const midfielders = outfield.slice(numDef, numDef + numMid);
+      const attackers = outfield.slice(numDef + numMid);
+
+      const drawTacticalLine = (group, color, labelText, dashPattern = [6, 4]) => {
+        if (group.length < 2) return;
+
+        // Sort players within the tactical line by Y coordinate (cross-pitch)
+        const linePlayers = [...group].sort((a, b) => a.y - b.y);
+
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash(dashPattern);
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+
+        // 1. Connect line across players in Y-order
+        ctx.beginPath();
+        linePlayers.forEach((p, idx) => {
+          const cx = toCanvasX(p.x);
+          const cy = toCanvasY(p.y);
+          if (idx === 0) {
+            ctx.moveTo(cx, cy);
+          } else {
+            ctx.lineTo(cx, cy);
+          }
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
+
+        // 2. Draw distance badges between consecutive players along the line
+        for (let i = 0; i < linePlayers.length - 1; i++) {
+          const p1 = linePlayers[i];
+          const p2 = linePlayers[i + 1];
+
+          const distMeters = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+          const cx1 = toCanvasX(p1.x);
+          const cy1 = toCanvasY(p1.y);
+          const cx2 = toCanvasX(p2.x);
+          const cy2 = toCanvasY(p2.y);
+
+          const midX = (cx1 + cx2) / 2;
+          const midY = (cy1 + cy2) / 2;
+
+          const badgeText = `${distMeters.toFixed(1)}m`;
+          ctx.font = 'bold 9px monospace';
+          const textMetrics = ctx.measureText(badgeText);
+          const padX = 5;
+          const badgeW = textMetrics.width + padX * 2;
+          const badgeH = 14;
+
+          const bx = midX - badgeW / 2;
+          const by = midY - badgeH / 2;
+
+          // Draw Badge background pill
+          ctx.fillStyle = 'rgba(10, 11, 16, 0.88)';
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(bx, by, badgeW, badgeH, 4);
+          } else {
+            ctx.rect(bx, by, badgeW, badgeH);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // Draw Distance Text
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(badgeText, midX, midY + 0.5);
+        }
+
+        // 3. Draw line title badge (e.g. "DIF", "CENT", "ATT") near top of line
+        if (linePlayers.length > 0) {
+          const topP = linePlayers[0];
+          const tcx = toCanvasX(topP.x);
+          const tcy = toCanvasY(topP.y) - 16;
+
+          ctx.fillStyle = color;
+          ctx.font = 'bold 9px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(labelText, tcx, Math.max(margin + 6, tcy));
+        }
+
+        ctx.restore();
+      };
+
+      if (showDefensiveLine) {
+        drawTacticalLine(defenders, '#38bdf8', 'DIFESA', [6, 4]); // Cyan / Sky Blue
+      }
+      if (showMidfieldLine) {
+        drawTacticalLine(midfielders, '#f59e0b', 'CENTROCAMPO', [6, 4]); // Amber / Gold
+      }
+      if (showAttackingLine) {
+        drawTacticalLine(attackers, '#10b981', 'ATTACCO', [6, 4]); // Emerald Green
+      }
+    }
+
     // 8. Draw Players
     activePlayers.forEach(player => {
       const cx = toCanvasX(player.x);
@@ -539,16 +671,19 @@ function App() {
       setHoveredPlayer(null);
     }
 
-  }, [clipData, currentFrameIdx, showOpponent, showCentroid, showPitchControl, showPassMap, mousePos]);
+  }, [clipData, currentFrameIdx, showOpponent, showCentroid, showPitchControl, showPassMap, showDefensiveLine, showMidfieldLine, showAttackingLine, mousePos]);
 
   // Handle canvas mouse move for interactive tooltips
   const handleMouseMove = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     });
   };
 
@@ -566,6 +701,207 @@ function App() {
   };
 
   const activeClip = clips.find(c => c.code_id === activeClipId);
+
+  // Helper renderers for view modes
+  const renderPlaybackControls = () => {
+    if (!clipData) return null;
+    return (
+      <div className="playback-controls">
+        <div className="timeline-bar">
+          <button className="btn" onClick={handlePlayPause}>
+            {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+          </button>
+          <button className="btn" onClick={handleReset} title="Reset Clip">
+            <RotateCcw size={14} />
+          </button>
+          <input 
+            type="range"
+            min={0}
+            max={clipData.frames.length - 1}
+            value={currentFrameIdx}
+            onChange={handleSliderChange}
+            className="timeline-slider"
+          />
+          <span className="time-display">
+            {clipData.frames[currentFrameIdx]?.timestamp_sec.toFixed(2)}s / {activeClip?.duration_sec.toFixed(2)}s
+          </span>
+        </div>
+        <div className="controls-row">
+          <div className="btn-group">
+            {[0.25, 0.5, 1, 2].map(speed => (
+              <button 
+                key={speed}
+                className={`btn ${playbackSpeed === speed ? 'btn-active' : ''}`}
+                onClick={() => setPlaybackSpeed(speed)}
+              >
+                {speed}x
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            Frame {currentFrameIdx + 1} of {clipData.frames.length}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderControlsCard = () => (
+    <div className="control-panel-card">
+      <h3>Visual Layers</h3>
+      <div className="toggle-group">
+        <div className="toggle-item">
+          <span>Opponents (White Team)</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showOpponent} 
+              onChange={e => setShowOpponent(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div className="toggle-item">
+          <span>Centroid & Dispersion (Red)</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showCentroid} 
+              onChange={e => setShowCentroid(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div className="toggle-item">
+          <span>Occupancy (Pitch Control)</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showPitchControl} 
+              onChange={e => setShowPitchControl(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div className="toggle-item">
+          <span>Pass Map Overlay</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showPassMap} 
+              onChange={e => setShowPassMap(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div className="toggle-item">
+          <span style={{ color: '#38bdf8', fontWeight: 600 }}>Linea Difensiva (DIF)</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showDefensiveLine} 
+              onChange={e => setShowDefensiveLine(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div className="toggle-item">
+          <span style={{ color: '#f59e0b', fontWeight: 600 }}>Linea Centrocampisti (CENT)</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showMidfieldLine} 
+              onChange={e => setShowMidfieldLine(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+
+        <div className="toggle-item">
+          <span style={{ color: '#10b981', fontWeight: 600 }}>Linea Attaccanti (ATT)</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={showAttackingLine} 
+              onChange={e => setShowAttackingLine(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderRadarCard = (isSecondary = false) => (
+    <div 
+      className={`canvas-container-card ${isSecondary ? 'view-secondary' : 'view-primary'}`}
+      onClick={isSecondary ? () => setPrimaryView('radar') : undefined}
+    >
+      <div className="view-card-header">
+        <span className="view-card-title"><Radio size={14} /> Tactical Radar 2D</span>
+        {isSecondary && (
+          <span className="secondary-badge">
+            <Maximize2 size={12} /> Clicca per ingrandire
+          </span>
+        )}
+      </div>
+
+      <div className="canvas-wrapper">
+        <canvas 
+          ref={canvasRef}
+          width={800}
+          height={518}
+          className="radar-canvas"
+          onMouseMove={handleMouseMove}
+        />
+        {isSecondary && (
+          <div className="secondary-hover-hint">
+            <ArrowLeftRight size={16} /> Imposta come Principale
+          </div>
+        )}
+      </div>
+
+      {!isSecondary && layoutMode === 'asymmetric' && primaryView === 'radar' && renderPlaybackControls()}
+    </div>
+  );
+
+  const renderVideoCard = (isSecondary = false) => (
+    <div 
+      className={`video-container-card ${isSecondary ? 'view-secondary' : 'view-primary'}`}
+      onClick={isSecondary ? () => setPrimaryView('video') : undefined}
+    >
+      <div className="view-card-header">
+        <span className="view-card-title"><Tv size={14} /> Visuale Partita</span>
+        {isSecondary && (
+          <span className="secondary-badge">
+            <Maximize2 size={12} /> Clicca per ingrandire
+          </span>
+        )}
+      </div>
+
+      <div className="video-player-wrapper">
+        <video 
+          ref={videoRef}
+          src="/video/DEMO_1001_FULLMATCH.mp4"
+          className="video-player"
+          muted
+          playsInline
+        />
+        {isSecondary && (
+          <div className="secondary-hover-hint">
+            <ArrowLeftRight size={16} /> Imposta come Principale
+          </div>
+        )}
+      </div>
+
+      {!isSecondary && layoutMode === 'asymmetric' && primaryView === 'video' && renderPlaybackControls()}
+    </div>
+  );
 
   return (
     <div className="dashboard-container">
@@ -682,131 +1018,91 @@ function App() {
           )}
         </div>
 
-        {/* Visualizer Grid */}
-        <div className="visualizer-grid">
-          {/* Canvas Card */}
-          <div className="canvas-container-card">
-            <canvas 
-              ref={canvasRef}
-              width={800}
-              height={518}
-              className="radar-canvas"
-              onMouseMove={handleMouseMove}
-            />
-
-            {/* Playback controls */}
-            {clipData && (
-              <div className="playback-controls">
-                <div className="timeline-bar">
-                  <button className="btn" onClick={handlePlayPause}>
-                    {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-                  </button>
-                  <button className="btn" onClick={handleReset} title="Reset Clip">
-                    <RotateCcw size={14} />
-                  </button>
-                  <input 
-                    type="range"
-                    min={0}
-                    max={clipData.frames.length - 1}
-                    value={currentFrameIdx}
-                    onChange={handleSliderChange}
-                    className="timeline-slider"
-                  />
-                  <span className="time-display">
-                    {clipData.frames[currentFrameIdx]?.timestamp_sec.toFixed(2)}s / {activeClip?.duration_sec.toFixed(2)}s
-                  </span>
-                </div>
-                <div className="controls-row">
-                  <div className="btn-group">
-                    {[0.25, 0.5, 1, 2].map(speed => (
-                      <button 
-                        key={speed}
-                        className={`btn ${playbackSpeed === speed ? 'btn-active' : ''}`}
-                        onClick={() => setPlaybackSpeed(speed)}
-                      >
-                        {speed}x
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Frame {currentFrameIdx + 1} of {clipData.frames.length}
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* View Switcher & Layout Toolbar */}
+        <div className="view-mode-toolbar">
+          <div className="view-toolbar-section">
+            <span className="toolbar-label">Visuale Principale:</span>
+            <div className="btn-group">
+              <button 
+                className={`btn ${primaryView === 'radar' ? 'btn-active' : ''}`}
+                onClick={() => setPrimaryView('radar')}
+              >
+                <Radio size={14} /> Radar 2D
+              </button>
+              <button 
+                className={`btn ${primaryView === 'video' ? 'btn-active' : ''}`}
+                onClick={() => setPrimaryView('video')}
+              >
+                <Tv size={14} /> Visuale Partita
+              </button>
+              <button 
+                className="btn btn-swap"
+                onClick={() => setPrimaryView(prev => prev === 'radar' ? 'video' : 'radar')}
+                title="Scambia la visuale principale con quella secondaria"
+              >
+                <ArrowLeftRight size={14} /> Scambia
+              </button>
+            </div>
           </div>
 
-          {/* Right Column: Controls + Live Match Video */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {/* Controls Card */}
-            <div className="control-panel-card" style={{ flex: 'none' }}>
-              <h3>Visual Layers</h3>
-              <div className="toggle-group">
-                <div className="toggle-item">
-                  <span>Opponents (White Team)</span>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={showOpponent} 
-                      onChange={e => setShowOpponent(e.target.checked)} 
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="toggle-item">
-                  <span>Centroid & Dispersion (Red)</span>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={showCentroid} 
-                      onChange={e => setShowCentroid(e.target.checked)} 
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="toggle-item">
-                  <span>Occupancy (Pitch Control)</span>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={showPitchControl} 
-                      onChange={e => setShowPitchControl(e.target.checked)} 
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-
-                <div className="toggle-item">
-                  <span>Pass Map Overlay</span>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={showPassMap} 
-                      onChange={e => setShowPassMap(e.target.checked)} 
-                    />
-                    <span className="slider"></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Video Player Card */}
-            <div className="video-container-card" style={{ flex: 1 }}>
-              <h3>Match Broadcast</h3>
-              <div className="video-player-wrapper">
-                <video 
-                  ref={videoRef}
-                  src="/video/DEMO_1001_FULLMATCH.mp4"
-                  className="video-player"
-                  muted
-                  playsInline
-                />
-              </div>
+          <div className="view-toolbar-section">
+            <span className="toolbar-label">Dimensione Layout:</span>
+            <div className="btn-group">
+              <button 
+                className={`btn ${layoutMode === 'asymmetric' ? 'btn-active' : ''}`}
+                onClick={() => setLayoutMode('asymmetric')}
+              >
+                <LayoutGrid size={14} /> 1 Grande + 1 Piccola
+              </button>
+              <button 
+                className={`btn ${layoutMode === 'equal' ? 'btn-active' : ''}`}
+                onClick={() => setLayoutMode('equal')}
+              >
+                <Columns size={14} /> Entrambe Uguali (50/50)
+              </button>
             </div>
           </div>
         </div>
+
+        {/* Dynamic Visualizer Grid Layout */}
+        {layoutMode === 'asymmetric' ? (
+          <div className="visualizer-grid layout-asymmetric">
+            {/* Primary Main View (Large) */}
+            <div className="primary-view-container">
+              {primaryView === 'radar' ? renderRadarCard(false) : renderVideoCard(false)}
+            </div>
+
+            {/* Secondary Column (Small Preview + Controls) */}
+            <div className="secondary-column">
+              {renderControlsCard()}
+              <div className="secondary-view-container">
+                {primaryView === 'radar' ? renderVideoCard(true) : renderRadarCard(true)}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="equal-layout-wrapper">
+            {/* Controls Bar */}
+            <div className="equal-controls-wrapper">
+              {renderControlsCard()}
+            </div>
+
+            {/* Dual Equal 50/50 Grid */}
+            <div className="visualizer-grid layout-equal">
+              <div className="equal-view-card">
+                {renderRadarCard(false)}
+              </div>
+              <div className="equal-view-card">
+                {renderVideoCard(false)}
+              </div>
+            </div>
+
+            {/* Unified Playback Controls Bar */}
+            <div className="shared-playback-container">
+              {renderPlaybackControls()}
+            </div>
+          </div>
+        )}
 
         {/* Bottom Tab Panels */}
         <div className="metrics-panel">
