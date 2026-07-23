@@ -8,9 +8,13 @@ import {
   LayoutGrid,
   Tv,
   Radio,
-  Maximize2
+  Maximize2,
+  Camera,
+  Layers
 } from 'lucide-react';
 import './App.css';
+import PerInstanceStaticMapCard from './components/PerInstanceStaticMapCard';
+import PossessionSequenceMapCard from './components/PossessionSequenceMapCard';
 
 function App() {
   const [activeTab, setActiveTab] = useState('transitions');
@@ -963,6 +967,33 @@ function App() {
         </div>
 
         <div className="clip-list">
+          {/* Action-level Possession Sequence Map selector item */}
+          <div 
+            className={`clip-card ${primaryView === 'sequence_map' ? 'active' : ''}`}
+            onClick={() => setPrimaryView('sequence_map')}
+            style={{ 
+              borderColor: primaryView === 'sequence_map' ? '#38bdf8' : 'rgba(56, 189, 248, 0.3)',
+              backgroundColor: primaryView === 'sequence_map' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(15, 23, 42, 0.6)',
+              marginBottom: '12px'
+            }}
+          >
+            <div className="clip-card-header">
+              <span className="clip-title" style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
+                <Layers size={14} /> Sequence Map (All)
+              </span>
+              <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.25)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)' }}>
+                Summed ({filteredClips.length})
+              </span>
+            </div>
+            <div className="clip-details">
+              <span>Action: {selectedCategory} ({selectedTeam})</span>
+            </div>
+          </div>
+
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '8px 0 6px 4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Individual Action Instances ({filteredClips.length}):
+          </div>
+
           {filteredClips.length === 0 ? (
             <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
               No actions found for this combination.
@@ -971,8 +1002,13 @@ function App() {
             filteredClips.map(clip => (
               <div 
                 key={clip.code_id}
-                className={`clip-card ${activeClipId === clip.code_id ? 'active' : ''}`}
-                onClick={() => setActiveClipId(clip.code_id)}
+                className={`clip-card ${activeClipId === clip.code_id && primaryView !== 'sequence_map' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveClipId(clip.code_id);
+                  if (primaryView === 'sequence_map') {
+                    setPrimaryView('radar');
+                  }
+                }}
               >
                 <div className="clip-card-header">
                   <span className="clip-title">Instance #{clip.code_id}</span>
@@ -1036,6 +1072,18 @@ function App() {
                 <Tv size={14} /> Visuale Partita
               </button>
               <button 
+                className={`btn ${primaryView === 'static_map' ? 'btn-active' : ''}`}
+                onClick={() => setPrimaryView('static_map')}
+              >
+                <Camera size={14} /> Static Map
+              </button>
+              <button 
+                className={`btn ${primaryView === 'sequence_map' ? 'btn-active' : ''}`}
+                onClick={() => setPrimaryView('sequence_map')}
+              >
+                <Layers size={14} /> Sequence Map
+              </button>
+              <button 
                 className="btn btn-swap"
                 onClick={() => setPrimaryView(prev => prev === 'radar' ? 'video' : 'radar')}
                 title="Scambia la visuale principale con quella secondaria"
@@ -1065,7 +1113,17 @@ function App() {
         </div>
 
         {/* Dynamic Visualizer Grid Layout */}
-        {layoutMode === 'asymmetric' ? (
+        {primaryView === 'sequence_map' ? (
+          <PossessionSequenceMapCard 
+            selectedCategory={selectedCategory}
+            selectedTeam={selectedTeam}
+          />
+        ) : primaryView === 'static_map' ? (
+          <PerInstanceStaticMapCard 
+            activeClipId={activeClipId}
+            activeClip={activeClip}
+          />
+        ) : layoutMode === 'asymmetric' ? (
           <div className="visualizer-grid layout-asymmetric">
             {/* Primary Main View (Large) */}
             <div className="primary-view-container">
@@ -1114,6 +1172,12 @@ function App() {
               Transitions Analytics
             </span>
             <span 
+              className={`tab ${activeTab === 'static_map' ? 'active' : ''}`}
+              onClick={() => setActiveTab('static_map')}
+            >
+              Per-Instance Static Map
+            </span>
+            <span 
               className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
               onClick={() => setActiveTab('performance')}
             >
@@ -1122,6 +1186,12 @@ function App() {
           </div>
 
           <div className="tab-content">
+            {activeTab === 'static_map' && (
+              <PerInstanceStaticMapCard 
+                activeClipId={activeClipId}
+                activeClip={activeClip}
+              />
+            )}
             {activeTab === 'transitions' && (
               <div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
