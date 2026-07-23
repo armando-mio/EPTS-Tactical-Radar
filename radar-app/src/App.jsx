@@ -3,21 +3,21 @@ import {
   Play, 
   Pause, 
   RotateCcw, 
-  ArrowLeftRight,
-  Columns,
-  LayoutGrid,
+  Radio, 
+  Camera, 
   Tv,
-  Radio,
-  Maximize2,
-  Camera,
-  Layers
+  Activity,
+  Zap,
+  Sliders,
+  GripVertical,
+  Layers,
+  Shield
 } from 'lucide-react';
 import './App.css';
 import PerInstanceStaticMapCard from './components/PerInstanceStaticMapCard';
-import PossessionSequenceMapCard from './components/PossessionSequenceMapCard';
+import PossessionSequenceMapModal from './components/PossessionSequenceMapModal';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('transitions');
   const [clips, setClips] = useState([]);
   const [activeClipId, setActiveClipId] = useState(null);
   const [clipData, setClipData] = useState(null);
@@ -26,14 +26,24 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentFrameIdx, setCurrentFrameIdx] = useState(0);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  
-  // View mode and layout settings
-  const [primaryView, setPrimaryView] = useState('radar'); // 'radar' | 'video'
-  const [layoutMode, setLayoutMode] = useState('asymmetric'); // 'asymmetric' | 'equal'
 
-  // Sidebar Filters
+  // Drag and Drop Grid State
+  const [cardsOrder, setCardsOrder] = useState([
+    'radar', 
+    'video', 
+    'static-map', 
+    'visual-layers', 
+    'physical-perf', 
+    'transition-analytics'
+  ]);
+  const [draggedCardId, setDraggedCardId] = useState(null);
+  const [dragOverCardId, setDragOverCardId] = useState(null);
+
+  // Sidebar Filters & View Mode State
   const [selectedTeam, setSelectedTeam] = useState('Red Team');
   const [selectedCategory, setSelectedCategory] = useState('ATTACKING TRANSITION');
+  const [sidebarViewMode, setSidebarViewMode] = useState('instances'); // 'instances' | 'possession-maps'
+  const [activeModalAction, setActiveModalAction] = useState(null); // null | { category, team }
 
   // Visual Toggles
   const [showOpponent, setShowOpponent] = useState(true);
@@ -52,6 +62,74 @@ function App() {
   const animationRef = useRef(null);
   const videoRef = useRef(null);
   const lastFrameTimeRef = useRef(0);
+
+  // Group restrictions: Top cards vs Bottom cards
+  const getCardGroup = (id) => {
+    if (['radar', 'video', 'static-map'].includes(id)) return 'top';
+    if (['visual-layers', 'physical-perf', 'transition-analytics'].includes(id)) return 'bottom';
+    return null;
+  };
+
+  // Drag and Drop event handlers
+  const handleDragStart = (e, id) => {
+    setDraggedCardId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    if (!draggedCardId) return;
+    const isSameGroup = getCardGroup(draggedCardId) === getCardGroup(id);
+    e.dataTransfer.dropEffect = isSameGroup ? 'move' : 'none';
+  };
+
+  const handleDragEnter = (e, id) => {
+    e.preventDefault();
+    if (!draggedCardId || id === draggedCardId) return;
+    const isSameGroup = getCardGroup(draggedCardId) === getCardGroup(id);
+    if (isSameGroup) {
+      setDragOverCardId(id);
+    }
+  };
+
+  const handleDragLeave = (e, id) => {
+    e.preventDefault();
+    if (dragOverCardId === id) {
+      setDragOverCardId(null);
+    }
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    setDragOverCardId(null);
+    if (!draggedCardId || draggedCardId === targetId) return;
+
+    // Enforce group restriction: cards can only swap within the same section (top vs bottom)
+    const draggedGroup = getCardGroup(draggedCardId);
+    const targetGroup = getCardGroup(targetId);
+    if (draggedGroup !== targetGroup) {
+      setDraggedCardId(null);
+      return;
+    }
+
+    setCardsOrder(prevOrder => {
+      const newOrder = [...prevOrder];
+      const draggedIdx = newOrder.indexOf(draggedCardId);
+      const targetIdx = newOrder.indexOf(targetId);
+      if (draggedIdx !== -1 && targetIdx !== -1) {
+        newOrder[draggedIdx] = targetId;
+        newOrder[targetIdx] = draggedCardId;
+      }
+      return newOrder;
+    });
+    setDraggedCardId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedCardId(null);
+    setDragOverCardId(null);
+  };
 
   // Load initial summaries and metadata
   useEffect(() => {
@@ -83,11 +161,13 @@ function App() {
   const teamsList = Array.from(new Set(clips.map(c => c.team))).filter(Boolean).sort();
   const categoriesList = Array.from(new Set(clips.map(c => c.code))).filter(Boolean).sort();
 
-  // Filter clips based on selection
-  const filteredClips = clips.filter(c => 
-    c.team === selectedTeam && 
-    c.code === selectedCategory
-  );
+  // Filter clips based on selection and sort by minute ascending (minutaggio crescente)
+  const filteredClips = clips
+    .filter(c => 
+      c.team === selectedTeam && 
+      c.code === selectedCategory
+    )
+    .sort((a, b) => (a.start_time_sec || 0) - (b.start_time_sec || 0));
 
   // Sync active clip with filters
   useEffect(() => {
@@ -181,7 +261,6 @@ function App() {
     const currentFrame = clipData.frames[currentFrameIdx];
     if (!currentFrame) return;
 
-    // Use a tolerance threshold of 0.15s to keep seek operations smooth
     const diff = Math.abs(video.currentTime - currentFrame.timestamp_sec);
     if (diff > 0.15) {
       video.currentTime = currentFrame.timestamp_sec;
@@ -331,16 +410,14 @@ function App() {
       }
     }
 
-
     // 5. Draw Pass Map Overlay (glowing vectors showing clip passes)
-    if (showPassMap && clipData.passes.length > 0) {
+    if (showPassMap && clipData.passes && clipData.passes.length > 0) {
       clipData.passes.forEach(p => {
         const sx = toCanvasX(p.start_x);
         const sy = toCanvasY(p.start_y);
         const ex = toCanvasX(p.end_x);
         const ey = toCanvasY(p.end_y);
 
-        // Draw pass vector line
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 3]);
@@ -350,7 +427,6 @@ function App() {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Draw arrow head
         const angle = Math.atan2(ey - sy, ex - sx);
         ctx.fillStyle = '#3b82f6';
         ctx.beginPath();
@@ -359,15 +435,12 @@ function App() {
         ctx.lineTo(ex - 8 * Math.cos(angle + Math.PI / 6), ey - 8 * Math.sin(angle + Math.PI / 6));
         ctx.fill();
 
-        // Small indicator circle at start of pass
         ctx.fillStyle = 'rgba(59, 130, 246, 0.4)';
         ctx.beginPath();
         ctx.arc(sx, sy, 4, 0, 2 * Math.PI);
         ctx.fill();
       });
     }
-
-
 
     // 7. Draw Centroid and Dispersion boundary
     if (showCentroid) {
@@ -378,7 +451,6 @@ function App() {
         const ccx = toCanvasX(cx);
         const ccy = toCanvasY(cy);
 
-        // Draw diamond centroid
         ctx.fillStyle = '#60a5fa';
         ctx.shadowColor = 'rgba(96, 165, 250, 0.5)';
         ctx.shadowBlur = 8;
@@ -389,9 +461,8 @@ function App() {
         ctx.lineTo(ccx - 6, ccy);
         ctx.closePath();
         ctx.fill();
-        ctx.shadowBlur = 0; // reset shadow
+        ctx.shadowBlur = 0;
 
-        // Dotted connection lines
         ctx.strokeStyle = 'rgba(96, 165, 250, 0.3)';
         ctx.lineWidth = 1;
         ctx.setLineDash([2, 2]);
@@ -403,11 +474,9 @@ function App() {
         });
         ctx.setLineDash([]);
 
-        // Calculate average dispersion in meters
         const distances = redPlayers.map(p => Math.hypot(p.x - cx, p.y - cy));
         const dispersion = distances.reduce((sum, d) => sum + d, 0) / redPlayers.length;
 
-        // Draw dispersion circle
         ctx.strokeStyle = 'rgba(96, 165, 250, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([4, 4]);
@@ -422,10 +491,8 @@ function App() {
     const redTeamPlayers = currentFrame.players.filter(p => p.team === 'Red Team');
     
     if (redTeamPlayers.length >= 3 && (showDefensiveLine || showMidfieldLine || showAttackingLine)) {
-      // Sort Red Team players by X coordinate (from defense to attack)
       const sortedByX = [...redTeamPlayers].sort((a, b) => a.x - b.x);
 
-      // Exclude Goalkeeper (player furthest back if team has 10+ players)
       let outfield = sortedByX;
       if (sortedByX.length >= 10) {
         outfield = sortedByX.slice(1);
@@ -433,7 +500,6 @@ function App() {
 
       const totalOutfield = outfield.length;
 
-      // Calculate line sizes dynamically (e.g. 4 defenders, 3-4 midfielders, 3 attackers)
       const numDef = Math.max(1, Math.round(totalOutfield * 0.38));
       const numAtt = Math.max(1, Math.round(totalOutfield * 0.30));
       const numMid = Math.max(1, totalOutfield - numDef - numAtt);
@@ -445,7 +511,6 @@ function App() {
       const drawTacticalLine = (group, color, labelText, dashPattern = [6, 4]) => {
         if (group.length < 2) return;
 
-        // Sort players within the tactical line by Y coordinate (cross-pitch)
         const linePlayers = [...group].sort((a, b) => a.y - b.y);
 
         ctx.save();
@@ -455,7 +520,6 @@ function App() {
         ctx.shadowColor = color;
         ctx.shadowBlur = 8;
 
-        // 1. Connect line across players in Y-order
         ctx.beginPath();
         linePlayers.forEach((p, idx) => {
           const cx = toCanvasX(p.x);
@@ -470,7 +534,6 @@ function App() {
         ctx.setLineDash([]);
         ctx.shadowBlur = 0;
 
-        // 2. Draw distance badges between consecutive players along the line
         for (let i = 0; i < linePlayers.length - 1; i++) {
           const p1 = linePlayers[i];
           const p2 = linePlayers[i + 1];
@@ -495,86 +558,69 @@ function App() {
           const bx = midX - badgeW / 2;
           const by = midY - badgeH / 2;
 
-          // Draw Badge background pill
           ctx.fillStyle = 'rgba(10, 11, 16, 0.88)';
           ctx.strokeStyle = color;
           ctx.lineWidth = 1;
-
           ctx.beginPath();
-          if (ctx.roundRect) {
-            ctx.roundRect(bx, by, badgeW, badgeH, 4);
-          } else {
-            ctx.rect(bx, by, badgeW, badgeH);
-          }
+          ctx.roundRect(bx, by, badgeW, badgeH, 3);
           ctx.fill();
           ctx.stroke();
 
-          // Draw Distance Text
           ctx.fillStyle = '#ffffff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(badgeText, midX, midY + 0.5);
-        }
-
-        // 3. Draw line title badge (e.g. "DIF", "CENT", "ATT") near top of line
-        if (linePlayers.length > 0) {
-          const topP = linePlayers[0];
-          const tcx = toCanvasX(topP.x);
-          const tcy = toCanvasY(topP.y) - 16;
-
-          ctx.fillStyle = color;
-          ctx.font = 'bold 9px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText(labelText, tcx, Math.max(margin + 6, tcy));
+          ctx.fillText(badgeText, midX, midY);
         }
 
         ctx.restore();
       };
 
       if (showDefensiveLine) {
-        drawTacticalLine(defenders, '#38bdf8', 'DIFESA', [6, 4]); // Cyan / Sky Blue
+        drawTacticalLine(defenders, '#38bdf8', 'DIF');
       }
       if (showMidfieldLine) {
-        drawTacticalLine(midfielders, '#f59e0b', 'CENTROCAMPO', [6, 4]); // Amber / Gold
+        drawTacticalLine(midfielders, '#f59e0b', 'CENT');
       }
       if (showAttackingLine) {
-        drawTacticalLine(attackers, '#10b981', 'ATTACCO', [6, 4]); // Emerald Green
+        drawTacticalLine(attackers, '#10b981', 'ATT');
       }
     }
 
-    // 8. Draw Players
-    activePlayers.forEach(player => {
-      const cx = toCanvasX(player.x);
-      const cy = toCanvasY(player.y);
-      const radius = 10;
+    // 8. Draw Player Nodes
+    activePlayers.forEach(p => {
+      const cx = toCanvasX(p.x);
+      const cy = toCanvasY(p.y);
+      const isRed = p.team === 'Red Team';
 
-      // Glow effect for players
-      ctx.save();
-      if (player.team === 'Red Team') {
-        ctx.shadowColor = 'rgba(239, 68, 68, 0.5)';
+      if (isRed) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.25)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
         ctx.shadowBlur = 6;
-        ctx.fillStyle = '#ef4444'; // Red Team player circle
-        ctx.strokeStyle = '#ffffff';
       } else {
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-        ctx.shadowBlur = 6;
-        ctx.fillStyle = '#ffffff'; // White Team player circle
-        ctx.strokeStyle = '#111827';
+        ctx.fillStyle = '#f3f4f6';
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+        ctx.shadowBlur = 4;
       }
-      ctx.lineWidth = 1.5;
 
       ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
       ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+      ctx.shadowBlur = 0;
 
-      // Jersey number inside player node
-      ctx.fillStyle = player.team === 'Red Team' ? '#ffffff' : '#111827';
-      ctx.font = 'bold 9px monospace';
+      ctx.strokeStyle = isRed ? '#ffffff' : '#1f2937';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = isRed ? '#ffffff' : '#111827';
+      ctx.font = 'bold 8px system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(player.id, cx, cy + 0.5);
+      ctx.fillText(p.id, cx, cy);
     });
 
     // 9. Draw Ball
@@ -582,22 +628,19 @@ function App() {
     if (ball && ball.x !== null && ball.y !== null) {
       const bx = toCanvasX(ball.x);
       const by = toCanvasY(ball.y);
-      
-      // Ball glow
-      ctx.save();
-      ctx.shadowColor = 'rgba(253, 224, 71, 0.7)';
+
+      ctx.fillStyle = '#fde047';
+      ctx.shadowColor = 'rgba(253, 224, 71, 0.8)';
       ctx.shadowBlur = 10;
-      ctx.fillStyle = '#facc15'; // Glowing yellow/white ball
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1;
-      
       ctx.beginPath();
       ctx.arc(bx, by, 5, 0, 2 * Math.PI);
       ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+      ctx.shadowBlur = 0;
 
-      // Small dotted line from ball to closest player (possession indicator)
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
       let closestP = null;
       let minBdist = Infinity;
       activePlayers.forEach(p => {
@@ -621,7 +664,6 @@ function App() {
     }
 
     // 10. Hover tooltips hit test
-    // Find player closest to the mouse cursor
     const mouseXInMeters = toMetersX(mousePos.x);
     const mouseYInMeters = toMetersY(mousePos.y);
 
@@ -639,7 +681,6 @@ function App() {
     if (minMouseDist < 1.5 && matchPlayer) {
       setHoveredPlayer(matchPlayer);
 
-      // Draw dynamic tooltip directly on canvas
       const tcx = toCanvasX(matchPlayer.x);
       const tcy = toCanvasY(matchPlayer.y);
 
@@ -653,7 +694,6 @@ function App() {
       const tx = tcx + 12 + tooltipW > width - margin ? tcx - 12 - tooltipW : tcx + 12;
       const ty = tcy - tooltipH / 2;
 
-      // Tooltip Card
       ctx.fillRect(tx, ty, tooltipW, tooltipH);
       ctx.strokeRect(tx, ty, tooltipW, tooltipH);
 
@@ -705,8 +745,268 @@ function App() {
   };
 
   const activeClip = clips.find(c => c.code_id === activeClipId);
+  const currentFrame = clipData?.frames?.[currentFrameIdx];
+  const currentMatchTimeSec = Math.max(1, (activeClip?.start_time_sec || 0) + (currentFrame?.timestamp_sec || 0));
+  const currentMatchMin = Math.max(0, Math.floor(currentMatchTimeSec / 60));
+  const matchRatio = Math.min(1.0, Math.max(0.01, currentMatchTimeSec / 5400));
 
-  // Helper renderers for view modes
+  const computedPhysicalSummary = fullMatchSummary.map(row => {
+    const distMeters = row.total_distance_meters * matchRatio;
+    const distKm = distMeters / 1000;
+    
+    const framePlayer = currentFrame?.players?.find(p => p.id === String(row.player_id) || p.id === row.player_id);
+    let avgSpeedKmh = row.avg_speed_kmh;
+    if (framePlayer && typeof framePlayer.s === 'number') {
+      avgSpeedKmh = row.avg_speed_kmh * 0.85 + framePlayer.s * 0.15;
+    }
+
+    return {
+      ...row,
+      distKm,
+      avgSpeedKmh
+    };
+  });
+
+  const maxDistKm = Math.max(...computedPhysicalSummary.map(r => r.distKm), 0.1);
+
+  // Helper renderer for individual grid card content
+  const renderCardContent = (cardId) => {
+    switch (cardId) {
+      case 'radar':
+        return (
+          <>
+            <div className="card-header">
+              <span className="card-title">
+                <Radio size={16} color="#ef4444" /> TACTICAL RADAR 2D
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="badge badge-passes">Live Tracking</span>
+                <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+              </div>
+            </div>
+
+            <div className="canvas-wrapper">
+              <canvas 
+                ref={canvasRef}
+                width={800}
+                height={518}
+                className="radar-canvas"
+                onMouseMove={handleMouseMove}
+              />
+            </div>
+
+            {renderPlaybackControls()}
+          </>
+        );
+
+      case 'video':
+        return (
+          <>
+            <div className="card-header">
+              <span className="card-title">
+                <Tv size={16} color="#3b82f6" /> VISUALE PARTITA
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="badge badge-passes">Match Sync</span>
+                <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+              </div>
+            </div>
+            <div className="video-player-wrapper">
+              <video 
+                ref={videoRef}
+                src="/video/DEMO_1001_FULLMATCH.mp4"
+                className="video-player"
+                muted
+                playsInline
+              />
+            </div>
+          </>
+        );
+
+      case 'static-map':
+        return (
+          <PerInstanceStaticMapCard 
+            activeClipId={activeClipId}
+            activeClip={activeClip}
+          />
+        );
+
+      case 'visual-layers':
+        return (
+          <>
+            <div className="card-header">
+              <span className="card-title">
+                <Sliders size={16} color="#3b82f6" /> VISUAL LAYERS
+              </span>
+              <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+            </div>
+            <div className="toggle-group">
+              <div className="toggle-item">
+                <span>Opponents (White Team)</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showOpponent} 
+                    onChange={e => setShowOpponent(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span>Centroid & Dispersion</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showCentroid} 
+                    onChange={e => setShowCentroid(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span>Pitch Control Occupancy</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showPitchControl} 
+                    onChange={e => setShowPitchControl(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span>Pass Map Overlay</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showPassMap} 
+                    onChange={e => setShowPassMap(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span style={{ color: '#38bdf8', fontWeight: 600 }}>Linea Difensiva (DIF)</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showDefensiveLine} 
+                    onChange={e => setShowDefensiveLine(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>Linea Centrocampisti (CENT)</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showMidfieldLine} 
+                    onChange={e => setShowMidfieldLine(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span style={{ color: '#10b981', fontWeight: 600 }}>Linea Attaccanti (ATT)</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showAttackingLine} 
+                    onChange={e => setShowAttackingLine(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+            </div>
+          </>
+        );
+
+      case 'physical-perf':
+        return (
+          <>
+            <div className="card-header">
+              <span className="card-title">
+                <Activity size={16} color="#10b981" /> PHYSICAL PERFORMANCE ({currentMatchMin}')
+              </span>
+              <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+            </div>
+            <div className="table-wrapper">
+              <table className="physical-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Distance</th>
+                    <th>Avg Speed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {computedPhysicalSummary.map(row => (
+                    <tr key={row.player_id}>
+                      <td style={{ fontWeight: '600' }}>Player {row.player_id}</td>
+                      <td>
+                        <div className="progress-bar-container">
+                          <div 
+                            className="progress-bar-fill" 
+                            style={{ width: `${Math.min(100, (row.distKm / maxDistKm) * 100)}%` }}
+                          ></div>
+                        </div>
+                        {row.distKm.toFixed(2)} km
+                      </td>
+                      <td>{row.avgSpeedKmh.toFixed(1)} km/h</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        );
+
+      case 'transition-analytics':
+        return (
+          <>
+            <div className="card-header">
+              <span className="card-title">
+                <Zap size={16} color="#f59e0b" /> TRANSITION ANALYTICS
+              </span>
+              <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+            </div>
+            <div className="transition-analytics-content">
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
+                Instantaneous speeds during frame playback:
+              </p>
+              {clipData && clipData.frames[currentFrameIdx] && (
+                <div className="player-list-grid">
+                  {clipData.frames[currentFrameIdx].players
+                    .filter(p => p.team === 'Red Team')
+                    .sort((a,b) => parseInt(a.id) - parseInt(b.id))
+                    .map(p => (
+                      <div key={p.id} className="player-card">
+                        <span className="player-circle-icon red-team">{p.id}</span>
+                        <div className="player-card-info">
+                          <span className="player-card-name">Player {p.id}</span>
+                          <span className="player-card-val">Speed: {p.s.toFixed(1)} km/h</span>
+                        </div>
+                      </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Helper renderer for playback controls
   const renderPlaybackControls = () => {
     if (!clipData) return null;
     return (
@@ -735,7 +1035,7 @@ function App() {
             {[0.25, 0.5, 1, 2].map(speed => (
               <button 
                 key={speed}
-                className={`btn ${playbackSpeed === speed ? 'btn-active' : ''}`}
+                className={`btn btn-sm ${playbackSpeed === speed ? 'btn-active' : ''}`}
                 onClick={() => setPlaybackSpeed(speed)}
               >
                 {speed}x
@@ -750,505 +1050,161 @@ function App() {
     );
   };
 
-  const renderControlsCard = () => (
-    <div className="control-panel-card">
-      <h3>Visual Layers</h3>
-      <div className="toggle-group">
-        <div className="toggle-item">
-          <span>Opponents (White Team)</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showOpponent} 
-              onChange={e => setShowOpponent(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="toggle-item">
-          <span>Centroid & Dispersion (Red)</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showCentroid} 
-              onChange={e => setShowCentroid(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="toggle-item">
-          <span>Occupancy (Pitch Control)</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showPitchControl} 
-              onChange={e => setShowPitchControl(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="toggle-item">
-          <span>Pass Map Overlay</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showPassMap} 
-              onChange={e => setShowPassMap(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="toggle-item">
-          <span style={{ color: '#38bdf8', fontWeight: 600 }}>Linea Difensiva (DIF)</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showDefensiveLine} 
-              onChange={e => setShowDefensiveLine(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="toggle-item">
-          <span style={{ color: '#f59e0b', fontWeight: 600 }}>Linea Centrocampisti (CENT)</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showMidfieldLine} 
-              onChange={e => setShowMidfieldLine(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="toggle-item">
-          <span style={{ color: '#10b981', fontWeight: 600 }}>Linea Attaccanti (ATT)</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={showAttackingLine} 
-              onChange={e => setShowAttackingLine(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderRadarCard = (isSecondary = false) => (
-    <div 
-      className={`canvas-container-card ${isSecondary ? 'view-secondary' : 'view-primary'}`}
-      onClick={isSecondary ? () => setPrimaryView('radar') : undefined}
-    >
-      <div className="view-card-header">
-        <span className="view-card-title"><Radio size={14} /> Tactical Radar 2D</span>
-        {isSecondary && (
-          <span className="secondary-badge">
-            <Maximize2 size={12} /> Clicca per ingrandire
-          </span>
-        )}
-      </div>
-
-      <div className="canvas-wrapper">
-        <canvas 
-          ref={canvasRef}
-          width={800}
-          height={518}
-          className="radar-canvas"
-          onMouseMove={handleMouseMove}
-        />
-        {isSecondary && (
-          <div className="secondary-hover-hint">
-            <ArrowLeftRight size={16} /> Imposta come Principale
-          </div>
-        )}
-      </div>
-
-      {!isSecondary && layoutMode === 'asymmetric' && primaryView === 'radar' && renderPlaybackControls()}
-    </div>
-  );
-
-  const renderVideoCard = (isSecondary = false) => (
-    <div 
-      className={`video-container-card ${isSecondary ? 'view-secondary' : 'view-primary'}`}
-      onClick={isSecondary ? () => setPrimaryView('video') : undefined}
-    >
-      <div className="view-card-header">
-        <span className="view-card-title"><Tv size={14} /> Visuale Partita</span>
-        {isSecondary && (
-          <span className="secondary-badge">
-            <Maximize2 size={12} /> Clicca per ingrandire
-          </span>
-        )}
-      </div>
-
-      <div className="video-player-wrapper">
-        <video 
-          ref={videoRef}
-          src="/video/DEMO_1001_FULLMATCH.mp4"
-          className="video-player"
-          muted
-          playsInline
-        />
-        {isSecondary && (
-          <div className="secondary-hover-hint">
-            <ArrowLeftRight size={16} /> Imposta come Principale
-          </div>
-        )}
-      </div>
-
-      {!isSecondary && layoutMode === 'asymmetric' && primaryView === 'video' && renderPlaybackControls()}
-    </div>
-  );
-
   return (
     <div className="dashboard-container">
-      {/* Sidebar: Clips Selector */}
+      {/* Sidebar: Clips & Action Types Selector */}
       <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>Metrica Nexus</h2>
-          <p>Tactical Action Selector</p>
-        </div>
-
-        {/* Filters */}
-        <div className="sidebar-filters" style={{ padding: '0 15px 15px 15px', display: 'flex', flexDirection: 'column', gap: '10px', borderBottom: '1px solid var(--border-color)' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Team:</span>
-            <select 
-              value={selectedTeam}
-              onChange={e => setSelectedTeam(e.target.value)}
-              style={{
-                backgroundColor: 'rgba(26, 28, 41, 0.8)',
-                color: 'white',
-                border: '1px solid var(--border-color)',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                outline: 'none',
-                width: '100%',
-                cursor: 'pointer'
-              }}
-            >
-              {teamsList.map(t => (
-                <option key={t} value={t}>{t === 'N/A' ? 'No Team (N/A)' : t}</option>
-              ))}
-            </select>
+        {/* Sidebar Controls & Filters */}
+        <div className="sidebar-filters-container">
+          {/* Team Switcher Toggle Switch */}
+          <div className="filter-group">
+            <span className="filter-label">Seleziona Team:</span>
+            <div className="team-toggle-group">
+              <button
+                type="button"
+                className={`team-toggle-btn red ${selectedTeam === 'Red Team' ? 'active' : ''}`}
+                onClick={() => setSelectedTeam('Red Team')}
+              >
+                <span className="team-indicator red"></span> Team Rosso
+              </button>
+              <button
+                type="button"
+                className={`team-toggle-btn white ${selectedTeam === 'White Team' ? 'active' : ''}`}
+                onClick={() => setSelectedTeam('White Team')}
+              >
+                <span className="team-indicator white"></span> Team Bianco
+              </button>
+            </div>
           </div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Action Type:</span>
+          {/* Action Type Selector */}
+          <div className="filter-group">
+            <span className="filter-label">Action Type:</span>
             <select 
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
-              style={{
-                backgroundColor: 'rgba(26, 28, 41, 0.8)',
-                color: 'white',
-                border: '1px solid var(--border-color)',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                outline: 'none',
-                width: '100%',
-                cursor: 'pointer',
-                textTransform: 'capitalize'
-              }}
+              className="action-type-select"
             >
               {categoriesList.map(cat => (
                 <option key={cat} value={cat}>{cat.toLowerCase()}</option>
               ))}
             </select>
           </div>
+
+          {/* Possession Sequence Maps Button */}
+          <button 
+            type="button" 
+            className={`possession-maps-toggle-btn ${sidebarViewMode === 'possession-maps' ? 'active' : ''}`}
+            onClick={() => setSidebarViewMode(prev => prev === 'possession-maps' ? 'instances' : 'possession-maps')}
+          >
+            <Layers size={15} color={sidebarViewMode === 'possession-maps' ? '#38bdf8' : '#9ca3af'} />
+            {sidebarViewMode === 'possession-maps' ? 'Mostra Istanze' : 'Possession Sequence Maps'}
+          </button>
         </div>
 
+        {/* Sidebar Content List */}
         <div className="clip-list">
-          {/* Action-level Possession Sequence Map selector item */}
-          <div 
-            className={`clip-card ${primaryView === 'sequence_map' ? 'active' : ''}`}
-            onClick={() => setPrimaryView('sequence_map')}
-            style={{ 
-              borderColor: primaryView === 'sequence_map' ? '#38bdf8' : 'rgba(56, 189, 248, 0.3)',
-              backgroundColor: primaryView === 'sequence_map' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(15, 23, 42, 0.6)',
-              marginBottom: '12px'
-            }}
-          >
-            <div className="clip-card-header">
-              <span className="clip-title" style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
-                <Layers size={14} /> Sequence Map (All)
-              </span>
-              <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.25)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.4)' }}>
-                Summed ({filteredClips.length})
-              </span>
-            </div>
-            <div className="clip-details">
-              <span>Action: {selectedCategory} ({selectedTeam})</span>
-            </div>
-          </div>
-
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', margin: '8px 0 6px 4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Individual Action Instances ({filteredClips.length}):
-          </div>
-
-          {filteredClips.length === 0 ? (
-            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              No actions found for this combination.
+          {sidebarViewMode === 'possession-maps' ? (
+            <div className="action-types-view">
+              <div className="sidebar-section-title">
+                Action Types ({categoriesList.length}):
+              </div>
+              <div className="sidebar-section-hint">
+                Seleziona un'Action Type per aprire la Possession Sequence Map cumulativa:
+              </div>
+              {categoriesList.map(cat => {
+                const count = clips.filter(c => c.team === selectedTeam && c.code === cat).length;
+                return (
+                  <div 
+                    key={cat}
+                    className="action-type-card-item"
+                    onClick={() => setActiveModalAction({ category: cat, team: selectedTeam })}
+                  >
+                    <div className="action-type-card-header">
+                      <span className="action-type-name">{cat}</span>
+                      <span className="badge badge-passes">{count} istanze</span>
+                    </div>
+                    <div className="action-type-card-footer">
+                      <span><Layers size={12} color="#38bdf8" /> Visualizza Map Cumulativa</span>
+                      <span className="arrow">➔</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            filteredClips.map(clip => (
-              <div 
-                key={clip.code_id}
-                className={`clip-card ${activeClipId === clip.code_id && primaryView !== 'sequence_map' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveClipId(clip.code_id);
-                  if (primaryView === 'sequence_map') {
-                    setPrimaryView('radar');
-                  }
-                }}
-              >
-                <div className="clip-card-header">
-                  <span className="clip-title">Instance #{clip.code_id}</span>
-                  <span className="badge badge-passes">{clip.passes_count} passes</span>
-                </div>
-                <div className="clip-details">
-                  <span>Duration: {clip.duration_sec.toFixed(1)}s</span>
-                  <span>Avg Speed: {clip.avg_team_speed_kmh.toFixed(1)} km/h</span>
-                </div>
+            <div className="instances-view">
+              <div className="sidebar-section-title">
+                Action Instances ({filteredClips.length}):
               </div>
-            ))
+
+              {filteredClips.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  No actions found for this combination.
+                </div>
+              ) : (
+                filteredClips.map(clip => {
+                  const startMin = clip.start_time_sec > 0 ? Math.floor(clip.start_time_sec / 60) : 0;
+                  return (
+                    <div 
+                      key={clip.code_id}
+                      className={`clip-card ${activeClipId === clip.code_id ? 'active' : ''}`}
+                      onClick={() => setActiveClipId(clip.code_id)}
+                    >
+                      <div className="clip-card-header">
+                        <span className="clip-title">Instance #{clip.code_id}</span>
+                        <span className="badge badge-passes">{startMin}'</span>
+                      </div>
+                      <div className="clip-details">
+                        <span>Duration: {clip.duration_sec.toFixed(1)}s</span>
+                        <span>Avg Speed: {clip.avg_team_speed_kmh.toFixed(1)} km/h</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           )}
         </div>
       </div>
 
       {/* Main Content Pane */}
       <div className="main-content">
-        {/* Top Info Header */}
-        <div className="dashboard-header">
-          <div className="dashboard-title">
-            <h1>TACTICAL RADAR</h1>
-            <p>EPTS Data Visualizer & Performance Dashboard</p>
-          </div>
-          {activeClip && (
-            <div className="clip-stats">
-              <div className="stat-item">
-                <span className="stat-value">{activeClip.duration_sec.toFixed(1)}s</span>
-                <span className="stat-label">Duration</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{activeClip.avg_team_speed_kmh.toFixed(1)} km/h</span>
-                <span className="stat-label">Team Speed</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{activeClip.avg_dispersion_m.toFixed(1)}m</span>
-                <span className="stat-label">Dispersion</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{activeClip.passes_count}</span>
-                <span className="stat-label">Passes</span>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* 3x3 Grid Dashboard Layout */}
+        <div className="dashboard-grid-layout">
+          {cardsOrder.map((cardId, index) => {
+            const slotClass = `area-slot-${index}`;
+            const isDragging = draggedCardId === cardId;
+            const isSameGroup = draggedCardId && getCardGroup(draggedCardId) === getCardGroup(cardId);
+            const isDragOver = dragOverCardId === cardId && isSameGroup;
 
-        {/* View Switcher & Layout Toolbar */}
-        <div className="view-mode-toolbar">
-          <div className="view-toolbar-section">
-            <span className="toolbar-label">Visuale Principale:</span>
-            <div className="btn-group">
-              <button 
-                className={`btn ${primaryView === 'radar' ? 'btn-active' : ''}`}
-                onClick={() => setPrimaryView('radar')}
+            return (
+              <div
+                key={cardId}
+                className={`grid-card ${slotClass} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, cardId)}
+                onDragOver={(e) => handleDragOver(e, cardId)}
+                onDragEnter={(e) => handleDragEnter(e, cardId)}
+                onDragLeave={(e) => handleDragLeave(e, cardId)}
+                onDrop={(e) => handleDrop(e, cardId)}
+                onDragEnd={handleDragEnd}
               >
-                <Radio size={14} /> Radar 2D
-              </button>
-              <button 
-                className={`btn ${primaryView === 'video' ? 'btn-active' : ''}`}
-                onClick={() => setPrimaryView('video')}
-              >
-                <Tv size={14} /> Visuale Partita
-              </button>
-              <button 
-                className={`btn ${primaryView === 'static_map' ? 'btn-active' : ''}`}
-                onClick={() => setPrimaryView('static_map')}
-              >
-                <Camera size={14} /> Static Map
-              </button>
-              <button 
-                className={`btn ${primaryView === 'sequence_map' ? 'btn-active' : ''}`}
-                onClick={() => setPrimaryView('sequence_map')}
-              >
-                <Layers size={14} /> Sequence Map
-              </button>
-              <button 
-                className="btn btn-swap"
-                onClick={() => setPrimaryView(prev => prev === 'radar' ? 'video' : 'radar')}
-                title="Scambia la visuale principale con quella secondaria"
-              >
-                <ArrowLeftRight size={14} /> Scambia
-              </button>
-            </div>
-          </div>
-
-          <div className="view-toolbar-section">
-            <span className="toolbar-label">Dimensione Layout:</span>
-            <div className="btn-group">
-              <button 
-                className={`btn ${layoutMode === 'asymmetric' ? 'btn-active' : ''}`}
-                onClick={() => setLayoutMode('asymmetric')}
-              >
-                <LayoutGrid size={14} /> 1 Grande + 1 Piccola
-              </button>
-              <button 
-                className={`btn ${layoutMode === 'equal' ? 'btn-active' : ''}`}
-                onClick={() => setLayoutMode('equal')}
-              >
-                <Columns size={14} /> Entrambe Uguali (50/50)
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Dynamic Visualizer Grid Layout */}
-        {primaryView === 'sequence_map' ? (
-          <PossessionSequenceMapCard 
-            selectedCategory={selectedCategory}
-            selectedTeam={selectedTeam}
-          />
-        ) : primaryView === 'static_map' ? (
-          <PerInstanceStaticMapCard 
-            activeClipId={activeClipId}
-            activeClip={activeClip}
-          />
-        ) : layoutMode === 'asymmetric' ? (
-          <div className="visualizer-grid layout-asymmetric">
-            {/* Primary Main View (Large) */}
-            <div className="primary-view-container">
-              {primaryView === 'radar' ? renderRadarCard(false) : renderVideoCard(false)}
-            </div>
-
-            {/* Secondary Column (Small Preview + Controls) */}
-            <div className="secondary-column">
-              {renderControlsCard()}
-              <div className="secondary-view-container">
-                {primaryView === 'radar' ? renderVideoCard(true) : renderRadarCard(true)}
+                {renderCardContent(cardId)}
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="equal-layout-wrapper">
-            {/* Controls Bar */}
-            <div className="equal-controls-wrapper">
-              {renderControlsCard()}
-            </div>
-
-            {/* Dual Equal 50/50 Grid */}
-            <div className="visualizer-grid layout-equal">
-              <div className="equal-view-card">
-                {renderRadarCard(false)}
-              </div>
-              <div className="equal-view-card">
-                {renderVideoCard(false)}
-              </div>
-            </div>
-
-            {/* Unified Playback Controls Bar */}
-            <div className="shared-playback-container">
-              {renderPlaybackControls()}
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Tab Panels */}
-        <div className="metrics-panel">
-          <div className="tabs">
-            <span 
-              className={`tab ${activeTab === 'transitions' ? 'active' : ''}`}
-              onClick={() => setActiveTab('transitions')}
-            >
-              Transitions Analytics
-            </span>
-            <span 
-              className={`tab ${activeTab === 'static_map' ? 'active' : ''}`}
-              onClick={() => setActiveTab('static_map')}
-            >
-              Per-Instance Static Map
-            </span>
-            <span 
-              className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
-              onClick={() => setActiveTab('performance')}
-            >
-              Full Match Physical performance
-            </span>
-          </div>
-
-          <div className="tab-content">
-            {activeTab === 'static_map' && (
-              <PerInstanceStaticMapCard 
-                activeClipId={activeClipId}
-                activeClip={activeClip}
-              />
-            )}
-            {activeTab === 'transitions' && (
-              <div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
-                  Hover over players on the 2D pitch during playback to analyze instantaneous speeds and tactical coordinate updates frame-by-frame.
-                </p>
-                {clipData && (
-                  <div className="player-list-grid">
-                    {clipData.frames[currentFrameIdx]?.players
-                      .filter(p => p.team === 'Red Team')
-                      .sort((a,b) => parseInt(a.id) - parseInt(b.id))
-                      .map(p => (
-                        <div key={p.id} className="player-card">
-                          <span className="player-circle-icon red-team">{p.id}</span>
-                          <div className="player-card-info">
-                            <span className="player-card-name">Player {p.id}</span>
-                            <span className="player-card-val">Speed: {p.s.toFixed(1)} km/h</span>
-                          </div>
-                        </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'performance' && (
-              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                <table className="physical-table">
-                  <thead>
-                    <tr>
-                      <th>Player Name</th>
-                      <th>Total Distance covered</th>
-                      <th>Avg Speed (km/h)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fullMatchSummary.map(row => (
-                      <tr key={row.player_id}>
-                        <td style={{ fontWeight: '600' }}>Player {row.player_id} (Red)</td>
-                        <td>
-                          <div className="progress-bar-container">
-                            <div 
-                              className="progress-bar-fill" 
-                              style={{ width: `${(row.total_distance_meters / 11000) * 100}%` }}
-                            ></div>
-                          </div>
-                          {row.total_distance_meters.toFixed(1)} m
-                        </td>
-                        <td>{row.avg_speed_kmh.toFixed(1)} km/h</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+            );
+          })}
         </div>
       </div>
+
+      {/* Popup Modal for Possession Sequence Maps */}
+      {activeModalAction && (
+        <PossessionSequenceMapModal
+          category={activeModalAction.category}
+          team={activeModalAction.team}
+          onClose={() => setActiveModalAction(null)}
+        />
+      )}
     </div>
   );
 }

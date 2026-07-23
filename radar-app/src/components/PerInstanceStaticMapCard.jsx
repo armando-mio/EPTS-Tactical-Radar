@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import StaticPitchCanvas from './StaticPitchCanvas';
-import { Camera, Footprints, ArrowRightLeft } from 'lucide-react';
+import { Camera, Footprints, ArrowRightLeft, GripVertical, ArrowRight } from 'lucide-react';
 
 function PerInstanceStaticMapCard({ activeClipId, activeClip }) {
   const [mapData, setMapData] = useState(null);
@@ -35,62 +35,74 @@ function PerInstanceStaticMapCard({ activeClipId, activeClip }) {
 
   const progressions = mapData?.progressions || [];
   const passes = mapData?.passes || [];
-
   const totalProgDist = progressions.reduce((sum, p) => sum + (p.distance_m || 0), 0);
+  const attackDir = mapData?.clip_info?.attack_direction?.toUpperCase() || 'LTR';
 
   return (
-    <div className="canvas-container-card view-primary">
-      <div className="view-card-header" style={{ justifyContent: 'space-between' }}>
-        <span className="view-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Camera size={16} color="#06b6d4" /> Static Map — Instance #{activeClipId}
+    <div className="canvas-container-card view-primary" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header */}
+      <div className="view-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '6px', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
+        <span className="view-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text-primary)' }}>
+          <Camera size={16} color="#10b981" /> STATIC MAP #{activeClipId}
         </span>
-        <div style={{ display: 'flex', gap: '15px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#06b6d4', display: 'inline-block' }}></span>
-            Carries: <strong style={{ color: 'white' }}>{progressions.length}</strong>
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#8b5cf6', display: 'inline-block' }}></span>
-            Passes: <strong style={{ color: 'white' }}>{passes.length}</strong>
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '10px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+              Carries: <strong style={{ color: 'white' }}>{progressions.length}</strong>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#a855f7', display: 'inline-block' }}></span>
+              Passes: <strong style={{ color: 'white' }}>{passes.length}</strong>
+            </span>
+          </div>
+          <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
         </div>
       </div>
 
-      <div className="canvas-wrapper">
+      {/* Canvas Wrapper */}
+      <div className="canvas-wrapper" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <StaticPitchCanvas
           progressions={progressions}
           passes={passes}
           showProgressions={showProgressions}
           showPasses={showPasses}
           isSequenceMap={false}
-          width={800}
-          height={518}
         />
       </div>
 
-      {/* Layer Toggles & Metrics Summary */}
-      <div style={{ padding: '12px 15px', backgroundColor: 'rgba(15, 17, 26, 0.8)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: showProgressions ? '#06b6d4' : 'var(--text-secondary)' }}>
-            <input 
-              type="checkbox" 
-              checked={showProgressions} 
-              onChange={e => setShowProgressions(e.target.checked)} 
-            />
-            <Footprints size={14} /> Progression Lines ({progressions.length})
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: showPasses ? '#8b5cf6' : 'var(--text-secondary)' }}>
-            <input 
-              type="checkbox" 
-              checked={showPasses} 
-              onChange={e => setShowPasses(e.target.checked)} 
-            />
-            <ArrowRightLeft size={14} /> Pass Vectors ({passes.length})
-          </label>
+      {/* Metrics & Filter Pill Buttons (No square checkbox inputs) */}
+      <div className="map-metrics-ribbon">
+        <div className="ribbon-toggles">
+          <button
+            type="button"
+            className={`filter-pill-btn green ${showProgressions ? 'active' : ''}`}
+            onClick={() => setShowProgressions(prev => !prev)}
+          >
+            <span className="pill-dot green"></span>
+            <Footprints size={13} /> Carries ({progressions.length})
+          </button>
+          <button
+            type="button"
+            className={`filter-pill-btn purple ${showPasses ? 'active' : ''}`}
+            onClick={() => setShowPasses(prev => !prev)}
+          >
+            <span className="pill-dot purple"></span>
+            <ArrowRightLeft size={13} /> Pass Vectors ({passes.length})
+          </button>
         </div>
 
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-          Total Carry Dist: <strong style={{ color: '#06b6d4' }}>{totalProgDist.toFixed(1)}m</strong> | Attack Dir: <strong style={{ color: 'white' }}>{mapData?.clip_info?.attack_direction?.toUpperCase() || 'LTR'}</strong>
+        <div className="ribbon-metrics">
+          <div className="metric-badge green-badge">
+            <Footprints size={13} />
+            <span className="label">Total Carry Dist:</span>
+            <strong className="value">{totalProgDist.toFixed(1)}m</strong>
+          </div>
+          <div className="metric-badge sky-badge">
+            <ArrowRight size={13} />
+            <span className="label">Attack Dir:</span>
+            <strong className="value">{attackDir}</strong>
+          </div>
         </div>
       </div>
     </div>
