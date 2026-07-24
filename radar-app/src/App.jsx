@@ -53,10 +53,14 @@ function App() {
   const [showDefensiveLine, setShowDefensiveLine] = useState(false);
   const [showMidfieldLine, setShowMidfieldLine] = useState(false);
   const [showAttackingLine, setShowAttackingLine] = useState(false);
+  const [showInterLineSpace, setShowInterLineSpace] = useState(false);
   
   // Interactive tooltips / selections
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [hoveredPlayer, setHoveredPlayer] = useState(null);
+  
+  // Drag handle active state (restricts card drag-and-drop strictly to drag handle)
+  const [draggableCardId, setDraggableCardId] = useState(null);
   
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
@@ -72,6 +76,17 @@ function App() {
 
   // Drag and Drop event handlers
   const handleDragStart = (e, id) => {
+    if (
+      e.target.closest('.playback-controls') ||
+      e.target.closest('.timeline-slider') ||
+      e.target.closest('button') ||
+      e.target.closest('input') ||
+      e.target.closest('select') ||
+      e.target.closest('.switch')
+    ) {
+      e.preventDefault();
+      return;
+    }
     setDraggedCardId(id);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', id);
@@ -199,40 +214,75 @@ function App() {
       .catch(err => console.error(`Error loading clip ${activeClipId} tracking details:`, err));
   }, [activeClipId]);
 
-  // Playback timer loop
+  // 1. Playback & Master Video Synchronization Loop
   useEffect(() => {
-    if (!isPlaying || !clipData) {
+    if (!isPlaying || !clipData || !clipData.frames || clipData.frames.length === 0) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      const video = videoRef.current;
+      if (video && !video.paused) {
+        video.pause();
+      }
       return;
+    }
+
+    const video = videoRef.current;
+    const firstFrameTime = clipData.frames[0].timestamp_sec;
+    const startFrameTime = clipData.frames[currentFrameIdx]?.timestamp_sec ?? firstFrameTime;
+
+    // Start video playback if video element is mounted
+    if (video) {
+      video.playbackRate = playbackSpeed;
+      if (Math.abs(video.currentTime - startFrameTime) > 0.3) {
+        video.currentTime = startFrameTime;
+      }
+      video.play().catch(err => console.log("Video playback notice:", err));
     }
 
     const frameRate = 25; // 25 frames per second in Metrica data
     const intervalMs = 1000 / (frameRate * playbackSpeed);
 
-    const playLoop = (timestamp) => {
-      if (!lastFrameTimeRef.current) {
-        lastFrameTimeRef.current = timestamp;
+    const syncLoop = (timestamp) => {
+      const vid = videoRef.current;
+      
+      // If video is mounted and playing, use video.currentTime as the MASTER CLOCK
+      if (vid && !vid.paused && vid.readyState >= 2) {
+        const vTime = vid.currentTime;
+        const elapsedSec = vTime - firstFrameTime;
+        const targetIdx = Math.round(elapsedSec * 25);
+
+        if (targetIdx >= clipData.frames.length - 1) {
+          vid.pause();
+          setIsPlaying(false);
+          setCurrentFrameIdx(0);
+          vid.currentTime = firstFrameTime;
+          return;
+        } else if (targetIdx >= 0) {
+          setCurrentFrameIdx(targetIdx);
+        }
+      } else {
+        // Fallback: If video is unmounted or paused, drive frame index via timer
+        if (!lastFrameTimeRef.current) {
+          lastFrameTimeRef.current = timestamp;
+        }
+        const elapsedMs = timestamp - lastFrameTimeRef.current;
+        if (elapsedMs >= intervalMs) {
+          setCurrentFrameIdx(prevIdx => {
+            if (prevIdx >= clipData.frames.length - 1) {
+              setIsPlaying(false);
+              return 0;
+            }
+            return prevIdx + 1;
+          });
+          lastFrameTimeRef.current = timestamp;
+        }
       }
 
-      const elapsed = timestamp - lastFrameTimeRef.current;
-
-      if (elapsed >= intervalMs) {
-        setCurrentFrameIdx(prevIdx => {
-          if (prevIdx >= clipData.frames.length - 1) {
-            setIsPlaying(false); // Loop back or stop
-            return 0;
-          }
-          return prevIdx + 1;
-        });
-        lastFrameTimeRef.current = timestamp;
-      }
-
-      animationRef.current = requestAnimationFrame(playLoop);
+      animationRef.current = requestAnimationFrame(syncLoop);
     };
 
-    animationRef.current = requestAnimationFrame(playLoop);
+    animationRef.current = requestAnimationFrame(syncLoop);
 
     return () => {
       if (animationRef.current) {
@@ -242,36 +292,27 @@ function App() {
     };
   }, [isPlaying, clipData, playbackSpeed]);
 
-  // Sync video playback state (play/pause)
+  // 2. Sync video position ONLY when PAUSED (user scrubbing slider or resetting)
   useEffect(() => {
+    if (isPlaying) return; // Never mutate video.currentTime during active playback!
     const video = videoRef.current;
-    if (!video) return;
-    if (isPlaying) {
-      video.play().catch(err => console.log("Video playback delayed:", err));
-    } else {
-      video.pause();
-    }
-  }, [isPlaying]);
-
-  // Sync video current time when tracking frame updates
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !clipData) return;
+    if (!video || !clipData || !clipData.frames) return;
 
     const currentFrame = clipData.frames[currentFrameIdx];
-    if (!currentFrame) return;
-
-    const diff = Math.abs(video.currentTime - currentFrame.timestamp_sec);
-    if (diff > 0.15) {
-      video.currentTime = currentFrame.timestamp_sec;
+    if (currentFrame && typeof currentFrame.timestamp_sec === 'number') {
+      const diff = Math.abs(video.currentTime - currentFrame.timestamp_sec);
+      if (diff > 0.05) {
+        video.currentTime = currentFrame.timestamp_sec;
+      }
     }
-  }, [currentFrameIdx, clipData]);
+  }, [currentFrameIdx, clipData, isPlaying]);
 
-  // Sync video playback rate (speed)
+  // 3. Sync video playback rate (speed)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    video.playbackRate = playbackSpeed;
+    if (video) {
+      video.playbackRate = playbackSpeed;
+    }
   }, [playbackSpeed]);
 
   // Canvas drawing effect
@@ -451,21 +492,13 @@ function App() {
         const ccx = toCanvasX(cx);
         const ccy = toCanvasY(cy);
 
-        ctx.fillStyle = '#60a5fa';
-        ctx.shadowColor = 'rgba(96, 165, 250, 0.5)';
-        ctx.shadowBlur = 8;
-        ctx.beginPath();
-        ctx.moveTo(ccx, ccy - 6);
-        ctx.lineTo(ccx + 6, ccy);
-        ctx.lineTo(ccx, ccy + 6);
-        ctx.lineTo(ccx - 6, ccy);
-        ctx.closePath();
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        ctx.strokeStyle = 'rgba(96, 165, 250, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([2, 2]);
+        // Centroid dispersion connector lines (much more visible)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 4]);
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 6;
         redPlayers.forEach(p => {
           ctx.beginPath();
           ctx.moveTo(ccx, ccy);
@@ -473,17 +506,49 @@ function App() {
           ctx.stroke();
         });
         ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
+        ctx.restore();
 
+        // Dispersion boundary circle
         const distances = redPlayers.map(p => Math.hypot(p.x - cx, p.y - cy));
         const dispersion = distances.reduce((sum, d) => sum + d, 0) / redPlayers.length;
 
-        ctx.strokeStyle = 'rgba(96, 165, 250, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
+        ctx.save();
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.lineWidth = 2.0;
+        ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.arc(ccx, ccy, dispersion * scaleX, 0, 2 * Math.PI);
+        ctx.fill();
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.restore();
+
+        // Centroid center node (Vibrant glowing diamond marker with 'C')
+        ctx.save();
+        ctx.fillStyle = '#fbbf24';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 12;
+
+        ctx.beginPath();
+        ctx.moveTo(ccx, ccy - 9);
+        ctx.lineTo(ccx + 9, ccy);
+        ctx.lineTo(ccx, ccy + 9);
+        ctx.lineTo(ccx - 9, ccy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#0f111a';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('C', ccx, ccy);
+        ctx.restore();
       }
     }
 
@@ -515,10 +580,10 @@ function App() {
 
         ctx.save();
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.setLineDash(dashPattern);
         ctx.shadowColor = color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
 
         ctx.beginPath();
         linePlayers.forEach((p, idx) => {
@@ -534,111 +599,179 @@ function App() {
         ctx.setLineDash([]);
         ctx.shadowBlur = 0;
 
-        for (let i = 0; i < linePlayers.length - 1; i++) {
-          const p1 = linePlayers[i];
-          const p2 = linePlayers[i + 1];
+        // Draw distance badges along the line if showInterLineSpace is enabled
+        if (showInterLineSpace) {
+          for (let i = 0; i < linePlayers.length - 1; i++) {
+            const p1 = linePlayers[i];
+            const p2 = linePlayers[i + 1];
 
-          const distMeters = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            const distMeters = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
-          const cx1 = toCanvasX(p1.x);
-          const cy1 = toCanvasY(p1.y);
-          const cx2 = toCanvasX(p2.x);
-          const cy2 = toCanvasY(p2.y);
+            const cx1 = toCanvasX(p1.x);
+            const cy1 = toCanvasY(p1.y);
+            const cx2 = toCanvasX(p2.x);
+            const cy2 = toCanvasY(p2.y);
 
-          const midX = (cx1 + cx2) / 2;
-          const midY = (cy1 + cy2) / 2;
+            const midX = (cx1 + cx2) / 2;
+            const midY = (cy1 + cy2) / 2;
 
-          const badgeText = `${distMeters.toFixed(1)}m`;
-          ctx.font = 'bold 9px monospace';
-          const textMetrics = ctx.measureText(badgeText);
-          const padX = 5;
-          const badgeW = textMetrics.width + padX * 2;
-          const badgeH = 14;
+            const badgeText = `${distMeters.toFixed(1)}m`;
+            ctx.font = 'bold 9.5px monospace';
+            const textMetrics = ctx.measureText(badgeText);
+            const padX = 6;
+            const badgeW = textMetrics.width + padX * 2;
+            const badgeH = 15;
 
-          const bx = midX - badgeW / 2;
-          const by = midY - badgeH / 2;
+            const bx = midX - badgeW / 2;
+            const by = midY - badgeH / 2;
 
-          ctx.fillStyle = 'rgba(10, 11, 16, 0.88)';
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.roundRect(bx, by, badgeW, badgeH, 3);
-          ctx.fill();
-          ctx.stroke();
+            ctx.fillStyle = 'rgba(10, 12, 20, 0.94)';
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, badgeW, badgeH, 3);
+            ctx.fill();
+            ctx.stroke();
 
-          ctx.fillStyle = '#ffffff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(badgeText, midX, midY);
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(badgeText, midX, midY);
+          }
         }
 
         ctx.restore();
       };
 
-      if (showDefensiveLine) {
-        drawTacticalLine(defenders, '#38bdf8', 'DIF');
+      const activeLineGroups = [];
+      if (showDefensiveLine && defenders.length >= 2) {
+        drawTacticalLine(defenders, '#38bdf8', 'DEF');
+        activeLineGroups.push({ name: 'DEF', color: '#38bdf8', players: defenders });
       }
-      if (showMidfieldLine) {
-        drawTacticalLine(midfielders, '#f59e0b', 'CENT');
+      if (showMidfieldLine && midfielders.length >= 2) {
+        drawTacticalLine(midfielders, '#f59e0b', 'MID');
+        activeLineGroups.push({ name: 'MID', color: '#f59e0b', players: midfielders });
       }
-      if (showAttackingLine) {
+      if (showAttackingLine && attackers.length >= 2) {
         drawTacticalLine(attackers, '#10b981', 'ATT');
+        activeLineGroups.push({ name: 'ATT', color: '#10b981', players: attackers });
+      }
+
+      // Draw Inter-Line Space & Dimensions between adjacent active lines
+      if (showInterLineSpace && activeLineGroups.length >= 2) {
+        for (let g = 0; g < activeLineGroups.length - 1; g++) {
+          const g1 = activeLineGroups[g];
+          const g2 = activeLineGroups[g + 1];
+
+          const avgX1 = g1.players.reduce((s, p) => s + p.x, 0) / g1.players.length;
+          const avgY1 = g1.players.reduce((s, p) => s + p.y, 0) / g1.players.length;
+          const avgX2 = g2.players.reduce((s, p) => s + p.x, 0) / g2.players.length;
+          const avgY2 = g2.players.reduce((s, p) => s + p.y, 0) / g2.players.length;
+
+          const interLineDist = Math.hypot(avgX2 - avgX1, avgY2 - avgY1);
+          const cx1 = toCanvasX(avgX1);
+          const cy1 = toCanvasY(avgY1);
+          const cx2 = toCanvasX(avgX2);
+          const cy2 = toCanvasY(avgY2);
+
+          ctx.save();
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2.0;
+          ctx.setLineDash([5, 4]);
+
+          ctx.beginPath();
+          ctx.moveTo(cx1, cy1);
+          ctx.lineTo(cx2, cy2);
+          ctx.stroke();
+
+          const midX = (cx1 + cx2) / 2;
+          const midY = (cy1 + cy2) / 2;
+          const badgeText = `Space ${g1.name}-${g2.name}: ${interLineDist.toFixed(1)}m`;
+
+          ctx.font = 'bold 9.5px monospace';
+          const metrics = ctx.measureText(badgeText);
+          const padX = 6;
+          const badgeW = metrics.width + padX * 2;
+          const badgeH = 16;
+          const bx = midX - badgeW / 2;
+          const by = midY - badgeH / 2;
+
+          ctx.fillStyle = 'rgba(15, 17, 26, 0.95)';
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.roundRect(bx, by, badgeW, badgeH, 4);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#f43f5e';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(badgeText, midX, midY);
+          ctx.restore();
+        }
       }
     }
 
-    // 8. Draw Player Nodes
+    // 8. Draw Player Nodes (Larger, higher contrast & clear jersey numbers)
     activePlayers.forEach(p => {
       const cx = toCanvasX(p.x);
       const cy = toCanvasY(p.y);
       const isRed = p.team === 'Red Team';
 
       if (isRed) {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.25)';
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.30)';
         ctx.beginPath();
-        ctx.arc(cx, cy, 14, 0, 2 * Math.PI);
+        ctx.arc(cx, cy, 16, 0, 2 * Math.PI);
         ctx.fill();
 
         ctx.fillStyle = '#ef4444';
-        ctx.shadowColor = 'rgba(239, 68, 68, 0.6)';
-        ctx.shadowBlur = 6;
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.9)';
+        ctx.shadowBlur = 8;
       } else {
-        ctx.fillStyle = '#f3f4f6';
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
-        ctx.shadowBlur = 4;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 15, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 6;
       }
 
       ctx.beginPath();
-      ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
+      ctx.arc(cx, cy, 9, 0, 2 * Math.PI);
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      ctx.strokeStyle = isRed ? '#ffffff' : '#1f2937';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isRed ? '#ffffff' : '#0f172a';
+      ctx.lineWidth = 1.8;
       ctx.stroke();
 
-      ctx.fillStyle = isRed ? '#ffffff' : '#111827';
-      ctx.font = 'bold 8px system-ui';
+      ctx.fillStyle = isRed ? '#ffffff' : '#0f172a';
+      ctx.font = 'bold 9px system-ui';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(p.id, cx, cy);
     });
 
-    // 9. Draw Ball
+    // 9. Draw Ball (Larger & bright yellow)
     const ball = currentFrame.ball;
     if (ball && ball.x !== null && ball.y !== null) {
       const bx = toCanvasX(ball.x);
       const by = toCanvasY(ball.y);
 
-      ctx.fillStyle = '#fde047';
-      ctx.shadowColor = 'rgba(253, 224, 71, 0.8)';
-      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#facc15';
+      ctx.shadowColor = 'rgba(250, 204, 21, 0.9)';
+      ctx.shadowBlur = 14;
       ctx.beginPath();
-      ctx.arc(bx, by, 5, 0, 2 * Math.PI);
+      ctx.arc(bx, by, 7.5, 0, 2 * Math.PI);
       ctx.fill();
       ctx.shadowBlur = 0;
 
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.8;
       ctx.stroke();
 
       let closestP = null;
@@ -652,9 +785,9 @@ function App() {
       });
 
       if (minBdist < 1.5 && closestP) {
-        ctx.strokeStyle = 'rgba(253, 224, 71, 0.4)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([1, 1]);
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 2]);
         ctx.beginPath();
         ctx.moveTo(bx, by);
         ctx.lineTo(toCanvasX(closestP.x), toCanvasY(closestP.y));
@@ -663,59 +796,7 @@ function App() {
       }
     }
 
-    // 10. Hover tooltips hit test
-    const mouseXInMeters = toMetersX(mousePos.x);
-    const mouseYInMeters = toMetersY(mousePos.y);
-
-    let matchPlayer = null;
-    let minMouseDist = Infinity;
-
-    activePlayers.forEach(p => {
-      const d = Math.hypot(p.x - mouseXInMeters, p.y - mouseYInMeters);
-      if (d < minMouseDist) {
-        minMouseDist = d;
-        matchPlayer = p;
-      }
-    });
-
-    if (minMouseDist < 1.5 && matchPlayer) {
-      setHoveredPlayer(matchPlayer);
-
-      const tcx = toCanvasX(matchPlayer.x);
-      const tcy = toCanvasY(matchPlayer.y);
-
-      ctx.save();
-      ctx.fillStyle = 'rgba(18, 19, 26, 0.9)';
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 1;
-      
-      const tooltipW = 110;
-      const tooltipH = 45;
-      const tx = tcx + 12 + tooltipW > width - margin ? tcx - 12 - tooltipW : tcx + 12;
-      const ty = tcy - tooltipH / 2;
-
-      ctx.fillRect(tx, ty, tooltipW, tooltipH);
-      ctx.strokeRect(tx, ty, tooltipW, tooltipH);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 9px system-ui';
-      ctx.textAlign = 'left';
-      ctx.fillText(`Player ${matchPlayer.id}`, tx + 8, ty + 12);
-
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '8px system-ui';
-      ctx.fillText(`${matchPlayer.team}`, tx + 8, ty + 24);
-      
-      ctx.fillStyle = '#60a5fa';
-      ctx.font = 'bold 8px monospace';
-      ctx.fillText(`Speed: ${matchPlayer.s.toFixed(1)} km/h`, tx + 8, ty + 36);
-
-      ctx.restore();
-    } else {
-      setHoveredPlayer(null);
-    }
-
-  }, [clipData, currentFrameIdx, showOpponent, showCentroid, showPitchControl, showPassMap, showDefensiveLine, showMidfieldLine, showAttackingLine, mousePos]);
+  }, [clipData, currentFrameIdx, showOpponent, showCentroid, showPitchControl, showPassMap, showDefensiveLine, showMidfieldLine, showAttackingLine, showInterLineSpace]);
 
   // Handle canvas mouse move for interactive tooltips
   const handleMouseMove = (e) => {
@@ -746,7 +827,10 @@ function App() {
 
   const activeClip = clips.find(c => c.code_id === activeClipId);
   const currentFrame = clipData?.frames?.[currentFrameIdx];
-  const currentMatchTimeSec = Math.max(1, (activeClip?.start_time_sec || 0) + (currentFrame?.timestamp_sec || 0));
+  const firstFrameTime = clipData?.frames?.[0]?.timestamp_sec ?? activeClip?.start_time_sec ?? 0;
+  
+  // currentMatchTimeSec is directly the absolute match timestamp (e.g. 2760s = 46 min)
+  const currentMatchTimeSec = Math.max(0, currentFrame?.timestamp_sec ?? activeClip?.start_time_sec ?? 0);
   const currentMatchMin = Math.max(0, Math.floor(currentMatchTimeSec / 60));
   const matchRatio = Math.min(1.0, Math.max(0.01, currentMatchTimeSec / 5400));
 
@@ -770,7 +854,7 @@ function App() {
   const maxDistKm = Math.max(...computedPhysicalSummary.map(r => r.distKm), 0.1);
 
   // Helper renderer for individual grid card content
-  const renderCardContent = (cardId) => {
+  const renderCardContent = (cardId, isLargeSlot = false) => {
     switch (cardId) {
       case 'radar':
         return (
@@ -780,8 +864,7 @@ function App() {
                 <Radio size={16} color="#ef4444" /> TACTICAL RADAR 2D
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="badge badge-passes">Live Tracking</span>
-                <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+                <GripVertical size={16} className="drag-handle" title="Drag to swap view" onMouseDown={() => setDraggableCardId('radar')} />
               </div>
             </div>
 
@@ -791,11 +874,10 @@ function App() {
                 width={800}
                 height={518}
                 className="radar-canvas"
-                onMouseMove={handleMouseMove}
               />
             </div>
 
-            {renderPlaybackControls()}
+            {isLargeSlot && renderPlaybackControls()}
           </>
         );
 
@@ -804,11 +886,10 @@ function App() {
           <>
             <div className="card-header">
               <span className="card-title">
-                <Tv size={16} color="#3b82f6" /> VISUALE PARTITA
+                <Tv size={16} color="#3b82f6" /> MATCH VIDEO
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="badge badge-passes">Match Sync</span>
-                <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+                <GripVertical size={16} className="drag-handle" title="Drag to swap view" onMouseDown={() => setDraggableCardId('video')} />
               </div>
             </div>
             <div className="video-player-wrapper">
@@ -820,6 +901,8 @@ function App() {
                 playsInline
               />
             </div>
+
+            {isLargeSlot && renderPlaybackControls()}
           </>
         );
 
@@ -828,6 +911,7 @@ function App() {
           <PerInstanceStaticMapCard 
             activeClipId={activeClipId}
             activeClip={activeClip}
+            onHandleMouseDown={() => setDraggableCardId('static-map')}
           />
         );
 
@@ -838,7 +922,7 @@ function App() {
               <span className="card-title">
                 <Sliders size={16} color="#3b82f6" /> VISUAL LAYERS
               </span>
-              <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+              <GripVertical size={16} className="drag-handle" title="Drag to swap view" onMouseDown={() => setDraggableCardId('visual-layers')} />
             </div>
             <div className="toggle-group">
               <div className="toggle-item">
@@ -890,7 +974,7 @@ function App() {
               </div>
 
               <div className="toggle-item">
-                <span style={{ color: '#38bdf8', fontWeight: 600 }}>Linea Difensiva (DIF)</span>
+                <span style={{ color: '#38bdf8', fontWeight: 600 }}>Defensive Line (DEF)</span>
                 <label className="switch">
                   <input 
                     type="checkbox" 
@@ -902,7 +986,7 @@ function App() {
               </div>
 
               <div className="toggle-item">
-                <span style={{ color: '#f59e0b', fontWeight: 600 }}>Linea Centrocampisti (CENT)</span>
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>Midfield Line (MID)</span>
                 <label className="switch">
                   <input 
                     type="checkbox" 
@@ -914,12 +998,25 @@ function App() {
               </div>
 
               <div className="toggle-item">
-                <span style={{ color: '#10b981', fontWeight: 600 }}>Linea Attaccanti (ATT)</span>
+                <span style={{ color: '#10b981', fontWeight: 600 }}>Attacking Line (ATT)</span>
                 <label className="switch">
                   <input 
                     type="checkbox" 
                     checked={showAttackingLine} 
                     onChange={e => setShowAttackingLine(e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="toggle-item">
+                <span style={{ color: '#ec4899', fontWeight: 600 }}>Space Between Lines & Dimensions</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={showInterLineSpace} 
+                    onChange={e => setShowInterLineSpace(e.target.checked)} 
+                    disabled={!showDefensiveLine && !showMidfieldLine && !showAttackingLine}
                   />
                   <span className="slider"></span>
                 </label>
@@ -935,7 +1032,7 @@ function App() {
               <span className="card-title">
                 <Activity size={16} color="#10b981" /> PHYSICAL PERFORMANCE ({currentMatchMin}')
               </span>
-              <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+              <GripVertical size={16} className="drag-handle" title="Drag to swap view" onMouseDown={() => setDraggableCardId('physical-perf')} />
             </div>
             <div className="table-wrapper">
               <table className="physical-table">
@@ -975,7 +1072,7 @@ function App() {
               <span className="card-title">
                 <Zap size={16} color="#f59e0b" /> TRANSITION ANALYTICS
               </span>
-              <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+              <GripVertical size={16} className="drag-handle" title="Drag to swap view" onMouseDown={() => setDraggableCardId('transition-analytics')} />
             </div>
             <div className="transition-analytics-content">
               <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
@@ -1009,13 +1106,35 @@ function App() {
   // Helper renderer for playback controls
   const renderPlaybackControls = () => {
     if (!clipData) return null;
+
+    const relativeTimeSec = currentFrame && typeof currentFrame.timestamp_sec === 'number'
+      ? Math.max(0, currentFrame.timestamp_sec - firstFrameTime)
+      : 0;
+
     return (
-      <div className="playback-controls">
+      <div 
+        className="playback-controls"
+        draggable={false}
+        onDragStart={(e) => { e.stopPropagation(); e.preventDefault(); }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <div className="timeline-bar">
-          <button className="btn" onClick={handlePlayPause}>
+          <button 
+            type="button" 
+            className="btn" 
+            onClick={handlePlayPause}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             {isPlaying ? <Pause size={14} /> : <Play size={14} />}
           </button>
-          <button className="btn" onClick={handleReset} title="Reset Clip">
+          <button 
+            type="button" 
+            className="btn" 
+            onClick={handleReset} 
+            title="Reset Clip"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <RotateCcw size={14} />
           </button>
           <input 
@@ -1024,10 +1143,12 @@ function App() {
             max={clipData.frames.length - 1}
             value={currentFrameIdx}
             onChange={handleSliderChange}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
             className="timeline-slider"
           />
           <span className="time-display">
-            {clipData.frames[currentFrameIdx]?.timestamp_sec.toFixed(2)}s / {activeClip?.duration_sec.toFixed(2)}s
+            {relativeTimeSec.toFixed(2)}s / {activeClip?.duration_sec.toFixed(2)}s
           </span>
         </div>
         <div className="controls-row">
@@ -1035,8 +1156,10 @@ function App() {
             {[0.25, 0.5, 1, 2].map(speed => (
               <button 
                 key={speed}
+                type="button"
                 className={`btn btn-sm ${playbackSpeed === speed ? 'btn-active' : ''}`}
                 onClick={() => setPlaybackSpeed(speed)}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 {speed}x
               </button>
@@ -1058,48 +1181,61 @@ function App() {
         <div className="sidebar-filters-container">
           {/* Team Switcher Toggle Switch */}
           <div className="filter-group">
-            <span className="filter-label">Seleziona Team:</span>
+            <span className="filter-label">Select Team:</span>
             <div className="team-toggle-group">
               <button
                 type="button"
                 className={`team-toggle-btn red ${selectedTeam === 'Red Team' ? 'active' : ''}`}
                 onClick={() => setSelectedTeam('Red Team')}
               >
-                <span className="team-indicator red"></span> Team Rosso
+                <span className="team-indicator red"></span> Red Team
               </button>
               <button
                 type="button"
                 className={`team-toggle-btn white ${selectedTeam === 'White Team' ? 'active' : ''}`}
                 onClick={() => setSelectedTeam('White Team')}
               >
-                <span className="team-indicator white"></span> Team Bianco
+                <span className="team-indicator white"></span> White Team
+              </button>
+            </div>
+          </div>
+
+          {/* View Mode Toggle Switch (Swapped position: Position #2) */}
+          <div className="filter-group">
+            <span className="filter-label">View Mode:</span>
+            <div className="team-toggle-group">
+              <button
+                type="button"
+                className={`team-toggle-btn ${sidebarViewMode === 'instances' ? 'active-instances' : ''}`}
+                onClick={() => setSidebarViewMode('instances')}
+              >
+                Instances
+              </button>
+              <button
+                type="button"
+                className={`team-toggle-btn ${sidebarViewMode === 'possession-maps' ? 'active-sequence' : ''}`}
+                onClick={() => setSidebarViewMode('possession-maps')}
+              >
+                <Layers size={14} /> Sequence Maps
               </button>
             </div>
           </div>
           
-          {/* Action Type Selector */}
-          <div className="filter-group">
-            <span className="filter-label">Action Type:</span>
-            <select 
-              value={selectedCategory}
-              onChange={e => setSelectedCategory(e.target.value)}
-              className="action-type-select"
-            >
-              {categoriesList.map(cat => (
-                <option key={cat} value={cat}>{cat.toLowerCase()}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Possession Sequence Maps Button */}
-          <button 
-            type="button" 
-            className={`possession-maps-toggle-btn ${sidebarViewMode === 'possession-maps' ? 'active' : ''}`}
-            onClick={() => setSidebarViewMode(prev => prev === 'possession-maps' ? 'instances' : 'possession-maps')}
-          >
-            <Layers size={15} color={sidebarViewMode === 'possession-maps' ? '#38bdf8' : '#9ca3af'} />
-            {sidebarViewMode === 'possession-maps' ? 'Mostra Istanze' : 'Possession Sequence Maps'}
-          </button>
+          {/* Action Type Selector (Only visible if instances mode is selected: Position #3) */}
+          {sidebarViewMode === 'instances' && (
+            <div className="filter-group">
+              <span className="filter-label">Action Type:</span>
+              <select 
+                value={selectedCategory}
+                onChange={e => setSelectedCategory(e.target.value)}
+                className="action-type-select"
+              >
+                {categoriesList.map(cat => (
+                  <option key={cat} value={cat}>{cat.toLowerCase()}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Content List */}
@@ -1110,7 +1246,7 @@ function App() {
                 Action Types ({categoriesList.length}):
               </div>
               <div className="sidebar-section-hint">
-                Seleziona un'Action Type per aprire la Possession Sequence Map cumulativa:
+                Select an Action Type to view its cumulative Possession Sequence Map:
               </div>
               {categoriesList.map(cat => {
                 const count = clips.filter(c => c.team === selectedTeam && c.code === cat).length;
@@ -1120,14 +1256,8 @@ function App() {
                     className="action-type-card-item"
                     onClick={() => setActiveModalAction({ category: cat, team: selectedTeam })}
                   >
-                    <div className="action-type-card-header">
-                      <span className="action-type-name">{cat}</span>
-                      <span className="badge badge-passes">{count} istanze</span>
-                    </div>
-                    <div className="action-type-card-footer">
-                      <span><Layers size={12} color="#38bdf8" /> Visualizza Map Cumulativa</span>
-                      <span className="arrow">➔</span>
-                    </div>
+                    <div className="action-type-name">{cat}</div>
+                    <div className="action-type-instances-count">{count} Total Instances</div>
                   </div>
                 );
               })}
@@ -1182,15 +1312,25 @@ function App() {
               <div
                 key={cardId}
                 className={`grid-card ${slotClass} ${isDragging ? 'dragging' : ''} ${isDragOver ? 'drag-over' : ''}`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, cardId)}
+                draggable={draggableCardId === cardId}
+                onDragStart={(e) => {
+                  if (draggableCardId !== cardId) {
+                    e.preventDefault();
+                    return;
+                  }
+                  handleDragStart(e, cardId);
+                }}
                 onDragOver={(e) => handleDragOver(e, cardId)}
                 onDragEnter={(e) => handleDragEnter(e, cardId)}
                 onDragLeave={(e) => handleDragLeave(e, cardId)}
                 onDrop={(e) => handleDrop(e, cardId)}
-                onDragEnd={handleDragEnd}
+                onDragEnd={(e) => {
+                  handleDragEnd(e);
+                  setDraggableCardId(null);
+                }}
+                onMouseUp={() => setDraggableCardId(null)}
               >
-                {renderCardContent(cardId)}
+                {renderCardContent(cardId, index === 0)}
               </div>
             );
           })}

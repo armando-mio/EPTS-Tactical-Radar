@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import StaticPitchCanvas from './StaticPitchCanvas';
 import { Camera, Footprints, ArrowRightLeft, GripVertical, ArrowRight } from 'lucide-react';
 
-function PerInstanceStaticMapCard({ activeClipId, activeClip }) {
+function PerInstanceStaticMapCard({ activeClipId, activeClip, onHandleMouseDown }) {
   const [mapData, setMapData] = useState(null);
   const [showProgressions, setShowProgressions] = useState(true);
   const [showPasses, setShowPasses] = useState(true);
@@ -46,17 +46,7 @@ function PerInstanceStaticMapCard({ activeClipId, activeClip }) {
           <Camera size={16} color="#10b981" /> STATIC MAP #{activeClipId}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '10px', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-              Carries: <strong style={{ color: 'white' }}>{progressions.length}</strong>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#a855f7', display: 'inline-block' }}></span>
-              Passes: <strong style={{ color: 'white' }}>{passes.length}</strong>
-            </span>
-          </div>
-          <GripVertical size={16} className="drag-handle" title="Drag to swap view" />
+          <GripVertical size={16} className="drag-handle" title="Drag to swap view" onMouseDown={onHandleMouseDown} />
         </div>
       </div>
 

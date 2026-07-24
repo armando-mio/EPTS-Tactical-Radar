@@ -49,13 +49,13 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
                 progressions: found.progressions || []
               });
             } else {
-              setError(`Nessun dato cumulativo trovato per ${category} (${team})`);
+              setError(`No cumulative sequence data found for ${category} (${team})`);
             }
             setLoading(false);
           })
           .catch(err => {
             console.error(err);
-            setError(`Errore nel caricamento del file cumulativo.`);
+            setError(`Error loading cumulative sequence data.`);
             setLoading(false);
           });
       });
@@ -90,12 +90,12 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
               <p className="modal-subtitle">
                 <span className="category-tag">{category}</span>
                 <span className={`team-tag ${team === 'Red Team' ? 'red' : 'white'}`}>
-                  <Shield size={12} /> {team === 'Red Team' ? 'Team Rosso' : 'Team Bianco'}
+                  <Shield size={12} /> {team === 'Red Team' ? 'Red Team' : 'White Team'}
                 </span>
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose} title="Chiudi (ESC)">
+          <button className="modal-close-btn" onClick={onClose} title="Close (ESC)">
             <X size={22} />
           </button>
         </div>
@@ -105,11 +105,11 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
           {loading ? (
             <div className="modal-loading">
               <div className="spinner"></div>
-              <span>Caricamento Possession Sequence Map...</span>
+              <span>Loading Possession Sequence Map...</span>
             </div>
           ) : error || !sequenceData ? (
             <div className="modal-error">
-              <p>{error || 'Dati non disponibili.'}</p>
+              <p>{error || 'Data not available.'}</p>
             </div>
           ) : (
             <>
@@ -131,7 +131,7 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
               <div className="modal-controls-bar">
                 <div className="modal-metrics">
                   <div className="metric-pill">
-                    <span className="metric-label">Istanze Cumulate:</span>
+                    <span className="metric-label">Total Instances:</span>
                     <strong className="metric-val text-sky">{instancesCount}</strong>
                   </div>
                   <div className="metric-pill">
@@ -139,7 +139,7 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
                     <strong className="metric-val text-green">{progressions.length}</strong>
                   </div>
                   <div className="metric-pill">
-                    <span className="metric-label">Passaggi:</span>
+                    <span className="metric-label">Passes:</span>
                     <strong className="metric-val text-purple">{passes.length}</strong>
                   </div>
                 </div>
@@ -160,7 +160,7 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
                     onClick={() => setShowPasses(prev => !prev)}
                   >
                     <span className="pill-dot purple"></span>
-                    <ArrowRightLeft size={14} /> Passaggi ({passes.length})
+                    <ArrowRightLeft size={14} /> Passes ({passes.length})
                   </button>
                 </div>
               </div>
