@@ -27,11 +27,11 @@ The telemetry assets used in this prototype were acquired from **Metrica Sports 
 
 To efficiently process high-density tracking datasets on standard hardware (e.g. 8GB RAM), the Python scripts in `scripts/` utilize Pandas and release unneeded memory buffers immediately:
 
-* **[extract_attacking_transitions.py](file:///c:/Users/Dakkarm/Desktop/EPTS-Tactical-Radar/scripts/extract_attacking_transitions.py)**: Filters full match tracking telemetry down to targeted tactical clip frames.
-* **[calculate_metrics.py](file:///c:/Users/Dakkarm/Desktop/EPTS-Tactical-Radar/scripts/calculate_metrics.py)**: Computes cumulative distances covered in meters, player speeds, team centroids (center of mass), and dispersion metrics.
-* **[detect_passes.py](file:///c:/Users/Dakkarm/Desktop/EPTS-Tactical-Radar/scripts/detect_passes.py)**: Evaluates player-ball spatial geometry to detect possession touches and classify successful pass vectors.
-* **[detect_progressions.py](file:///c:/Users/Dakkarm/Desktop/EPTS-Tactical-Radar/scripts/detect_progressions.py)**: Tracks ball carries and progressive runs across match phases.
-* **[prepare_radar_data.py](file:///c:/Users/Dakkarm/Desktop/EPTS-Tactical-Radar/scripts/prepare_radar_data.py)**: Bundles telemetry, metrics, passes, and carries into chunked, lightweight JSON files per clip (~100KB each) inside the web app static data directory.
+* **[extract_attacking_transitions.py](scripts/extract_attacking_transitions.py)**: Filters full match tracking telemetry down to targeted tactical clip frames.
+* **[calculate_metrics.py](scripts/calculate_metrics.py)**: Computes cumulative distances covered in meters, player speeds, team centroids (center of mass), and dispersion metrics.
+* **[detect_passes.py](scripts/detect_passes.py)**: Evaluates player-ball spatial geometry to detect possession touches and classify successful pass vectors.
+* **[detect_progressions.py](scripts/detect_progressions.py)**: Tracks ball carries and progressive runs across match phases.
+* **[prepare_radar_data.py](scripts/prepare_radar_data.py)**: Bundles telemetry, metrics, passes, and carries into chunked, lightweight JSON files per clip (~100KB each) inside the web app static data directory.
 
 ---
 
@@ -56,6 +56,38 @@ The interactive tactical visualizer is a modern dashboard built with **Vite + Re
 3. Open [http://localhost:5173/](http://localhost:5173/) in your web browser.
 
 ### 🎥 Broadcast Video Streaming & Seek Sync
-To stream broadcast video assets directly from the local environment, the Vite configuration ([vite.config.js](file:///c:/Users/Dakkarm/Desktop/EPTS-Tactical-Radar/radar-app/vite.config.js)) incorporates custom dev server middleware supporting **HTTP Range Requests**. 
+To stream broadcast video assets directly from the local environment, the Vite configuration ([vite.config.js](radar-app/vite.config.js)) incorporates custom dev server middleware supporting **HTTP Range Requests**. 
 
 This allows the browser HTML5 video player to seek and stream video chunks seamlessly, keeping `currentTime` synchronized with frame indices in the 2D radar visualizer.
+
+---
+
+## 🎬 Visual Showcase & Tactical Analysis
+
+### 🎥 Interactive Dashboard & Synchronized Radar Demos
+The application provides real-time synchronization between broadcast video footage and a high-performance 2D radar visualizer:
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <b>Attacking Transition Demo (#293)</b><br/>
+      <video src="media/Attacking%20Transition%20%23293.mp4" controls width="100%"></video>
+    </td>
+    <td width="50%" align="center">
+      <b>Defense Middle Third Demo (#462)</b><br/>
+      <video src="media/Defense%20Middle%20Third%20%23462.mp4" controls width="100%"></video>
+    </td>
+  </tr>
+</table>
+
+*The video player automatically syncs frame indices with player tracking telemetry, displaying real-time team centroids, line distances, and physical performance metrics.*
+
+---
+
+### 📊 Tactical Simplification: Raw Vectors vs. Dominant Flows
+Without spatial corridor aggregation, raw event vectors can create visual clutter. The **Dominant Flows** engine reorganizes complex pass and carry trajectories into clear, aggregated build-up corridors:
+
+| Raw Vector Plot (Unprocessed) | Dominant Flows (Corridor Aggregation) |
+| :---: | :---: |
+| <img src="media/Vectors.png" alt="Raw Vectors" width="100%" /> | <img src="media/Dominant%20Flows.png" alt="Dominant Flows" width="100%" /> |
+| *Displays every individual pass and carry vector without spatial grouping, which can obscure strategic patterns.* | *Simplifies complex trajectories into top directional channels with side-by-side carry/pass volume indicators and zone cardinality shading.* |
