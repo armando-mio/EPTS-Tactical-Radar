@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import StaticPitchCanvas from './StaticPitchCanvas';
-import { X, Layers, Footprints, ArrowRightLeft, Shield } from 'lucide-react';
+import { X, Layers, Footprints, ArrowRightLeft, Shield, GitMerge, Compass, Activity } from 'lucide-react';
 
 function slugify(text) {
   if (!text) return '';
@@ -9,8 +9,11 @@ function slugify(text) {
 
 function PossessionSequenceMapModal({ category, team, onClose }) {
   const [sequenceData, setSequenceData] = useState(null);
+  const [viewMode, setViewMode] = useState('flow'); // 'flow' | 'vectors'
   const [showProgressions, setShowProgressions] = useState(true);
   const [showPasses, setShowPasses] = useState(true);
+  const [topChannels, setTopChannels] = useState([]);
+  const [tacticalSummary, setTacticalSummary] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,6 +22,8 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
 
     setLoading(true);
     setError(null);
+    setShowProgressions(true);
+    setShowPasses(true);
 
     const catSlug = slugify(category);
     const teamSlug = slugify(team);
@@ -95,9 +100,34 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose} title="Close (ESC)">
-            <X size={22} />
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* View Mode Segmented Selector */}
+            <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(15, 23, 42, 0.8)', padding: '3px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <button
+                type="button"
+                className={`mode-tab-btn ${viewMode === 'flow' ? 'active' : ''}`}
+                onClick={() => setViewMode('flow')}
+                title="Display main tactical corridors"
+                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <GitMerge size={14} /> Dominant Flows
+              </button>
+              <button
+                type="button"
+                className={`mode-tab-btn ${viewMode === 'vectors' ? 'active' : ''}`}
+                onClick={() => setViewMode('vectors')}
+                title="All individual vectors"
+                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <Compass size={14} /> All Vectors
+              </button>
+            </div>
+
+            <button className="modal-close-btn" onClick={onClose} title="Close (ESC)">
+              <X size={22} />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -120,6 +150,10 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
                   passes={passes}
                   showProgressions={showProgressions}
                   showPasses={showPasses}
+                  viewMode={viewMode}
+                  minFrequency={1}
+                  onTopChannelsCalculated={setTopChannels}
+                  onTacticalSummaryCalculated={setTacticalSummary}
                   isSequenceMap={true}
                   normalizedAttackDirection="Left to Right (LTR)"
                   width={1000}
@@ -127,7 +161,7 @@ function PossessionSequenceMapModal({ category, team, onClose }) {
                 />
               </div>
 
-              {/* Metrics & Layer Selection Bar (Pill buttons without square checkboxes) */}
+              {/* Metrics & Layer Selection Bar */}
               <div className="modal-controls-bar">
                 <div className="modal-metrics">
                   <div className="metric-pill">

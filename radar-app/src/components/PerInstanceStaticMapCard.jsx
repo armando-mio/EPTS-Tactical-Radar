@@ -12,6 +12,9 @@ function PerInstanceStaticMapCard({ activeClipId, activeClip, onHandleMouseDown 
     if (!activeClipId) return;
 
     setLoading(true);
+    setShowProgressions(true);
+    setShowPasses(true);
+
     fetch(`/data/clip_${activeClipId}_map.json`)
       .then(res => res.json())
       .then(data => {

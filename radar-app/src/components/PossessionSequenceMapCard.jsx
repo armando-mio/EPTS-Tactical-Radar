@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import StaticPitchCanvas from './StaticPitchCanvas';
-import { Layers, Sliders, Footprints, ArrowRightLeft, Shield } from 'lucide-react';
+import { Layers, Footprints, ArrowRightLeft, Shield, GitMerge, Compass, Activity } from 'lucide-react';
 
 function slugify(text) {
   if (!text) return '';
@@ -9,9 +9,11 @@ function slugify(text) {
 
 function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
   const [sequenceData, setSequenceData] = useState(null);
-  const [opacityScale, setOpacityScale] = useState(1.0);
+  const [viewMode, setViewMode] = useState('flow'); // 'flow' | 'heatmap' | 'vectors'
   const [showProgressions, setShowProgressions] = useState(true);
   const [showPasses, setShowPasses] = useState(true);
+  const [topChannels, setTopChannels] = useState([]);
+  const [tacticalSummary, setTacticalSummary] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -24,6 +26,8 @@ function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
 
     setLoading(true);
     setError(null);
+    setShowProgressions(true);
+    setShowPasses(true);
 
     fetch(filename)
       .then(res => {
@@ -45,7 +49,7 @@ function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
   if (loading) {
     return (
       <div className="canvas-container-card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-        Loading Possession Sequence Map for {selectedCategory} ({selectedTeam})...
+        Loading Possession Map for {selectedCategory} ({selectedTeam})...
       </div>
     );
   }
@@ -67,7 +71,7 @@ function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
 
   return (
     <div className="canvas-container-card view-primary">
-      <div className="view-card-header" style={{ justifyContent: 'space-between' }}>
+      <div className="view-card-header" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
         <span className="view-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Layers size={16} color="#38bdf8" /> Possession Sequence Map — <strong style={{ textTransform: 'capitalize' }}>{selectedCategory.toLowerCase()}</strong>
           <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', backgroundColor: selectedTeam === 'Red Team' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.15)', color: selectedTeam === 'Red Team' ? '#ef4444' : '#ffffff', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -75,18 +79,37 @@ function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
           </span>
         </span>
 
-        <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem' }}>
-          <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-            {instancesCount} Instances Overlaid
-          </span>
-          <span className="badge" style={{ backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', border: '1px solid rgba(6, 182, 212, 0.3)' }}>
-            {progressions.length} Carries
-          </span>
-          <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
-            {passes.length} Passes
-          </span>
+        {/* View Mode Segmented Selector */}
+        <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(15, 23, 42, 0.8)', padding: '3px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+          <button
+            type="button"
+            className={`mode-tab-btn ${viewMode === 'flow' ? 'active' : ''}`}
+            onClick={() => setViewMode('flow')}
+            title="Display main tactical corridors"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            <GitMerge size={14} /> Dominant Flows
+          </button>
+          <button
+            type="button"
+            className={`mode-tab-btn ${viewMode === 'vectors' ? 'active' : ''}`}
+            onClick={() => setViewMode('vectors')}
+            title="All individual vectors"
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            <Compass size={14} /> All Vectors
+          </button>
         </div>
       </div>
+
+      {/* Tactical Summary Banner */}
+      {viewMode === 'flow' && tacticalSummary && (
+        <div style={{ padding: '8px 14px', backgroundColor: 'rgba(56, 189, 248, 0.08)', borderBottom: '1px solid rgba(56, 189, 248, 0.18)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: '#f1f5f9' }}>
+          <Activity size={14} color="#38bdf8" />
+          <span style={{ color: '#38bdf8', fontWeight: 700 }}>Summary:</span>
+          <span>{tacticalSummary}</span>
+        </div>
+      )}
 
       <div className="canvas-wrapper">
         <StaticPitchCanvas
@@ -94,7 +117,10 @@ function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
           passes={passes}
           showProgressions={showProgressions}
           showPasses={showPasses}
-          opacityScale={opacityScale}
+          viewMode={viewMode}
+          minFrequency={1}
+          onTopChannelsCalculated={setTopChannels}
+          onTacticalSummaryCalculated={setTacticalSummary}
           isSequenceMap={true}
           normalizedAttackDirection="Left to Right (LTR)"
           width={800}
@@ -104,39 +130,23 @@ function PossessionSequenceMapCard({ selectedCategory, selectedTeam }) {
 
       {/* Controls Bar for Possession Sequence Map */}
       <div style={{ padding: '12px 18px', backgroundColor: 'rgba(15, 17, 26, 0.9)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-        <div style={{ display: 'flex', gap: '18px', alignItems: 'center' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: showProgressions ? '#06b6d4' : 'var(--text-secondary)' }}>
-            <input 
-              type="checkbox" 
-              checked={showProgressions} 
-              onChange={e => setShowProgressions(e.target.checked)} 
-            />
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            type="button"
+            className={`filter-pill-btn green ${showProgressions ? 'active' : ''}`}
+            onClick={() => setShowProgressions(prev => !prev)}
+          >
+            <span className="pill-dot green"></span>
             <Footprints size={14} /> Carries Overlay ({progressions.length})
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.8rem', color: showPasses ? '#8b5cf6' : 'var(--text-secondary)' }}>
-            <input 
-              type="checkbox" 
-              checked={showPasses} 
-              onChange={e => setShowPasses(e.target.checked)} 
-            />
+          </button>
+          <button
+            type="button"
+            className={`filter-pill-btn purple ${showPasses ? 'active' : ''}`}
+            onClick={() => setShowPasses(prev => !prev)}
+          >
+            <span className="pill-dot purple"></span>
             <ArrowRightLeft size={14} /> Pass Vectors ({passes.length})
-          </label>
-        </div>
-
-        {/* Opacity / Intensity Slider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-          <Sliders size={14} color="#38bdf8" />
-          <span>Density Contrast:</span>
-          <input 
-            type="range"
-            min={0.2}
-            max={2.5}
-            step={0.1}
-            value={opacityScale}
-            onChange={e => setOpacityScale(parseFloat(e.target.value))}
-            style={{ width: '100px', cursor: 'pointer' }}
-          />
-          <span style={{ color: 'white', fontWeight: 600, width: '32px' }}>{opacityScale.toFixed(1)}x</span>
+          </button>
         </div>
       </div>
     </div>
