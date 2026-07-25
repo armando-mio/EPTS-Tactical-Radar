@@ -176,7 +176,7 @@ function App() {
   const teamsList = Array.from(new Set(clips.map(c => c.team))).filter(Boolean).sort();
   const categoriesList = Array.from(new Set(clips.map(c => c.code))).filter(Boolean).sort();
 
-  // Filter clips based on selection and sort by minute ascending (minutaggio crescente)
+  // Filter clips based on selection and sort by minute ascending
   const filteredClips = clips
     .filter(c => 
       c.team === selectedTeam && 

@@ -250,7 +250,7 @@ function StaticPitchCanvas({
       ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
       ctx.font = 'bold 11px system-ui';
       ctx.textAlign = 'right';
-      ctx.fillText(`Direzione Attacco: ${normalizedAttackDirection} ➔`, drawWidth - margin - 8, margin + 15);
+      ctx.fillText(`Attack Direction: ${normalizedAttackDirection} ➔`, drawWidth - margin - 8, margin + 15);
       ctx.restore();
     }
   }, [progressions, passes, dimensions, showProgressions, showPasses, isSequenceMap, normalizedAttackDirection]);
